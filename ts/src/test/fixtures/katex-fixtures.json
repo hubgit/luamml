@@ -1,0 +1,137 @@
+[
+  {
+    "name": "\\\\html@mathml makes clean symbols 1",
+    "latex": "\\copyright\\neq\\notin≘\\KaTeX",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mtext> © </mtext>\n<mo mathvariant=\"normal\"> ≠ </mo>\n<mo mathvariant=\"normal\"> ∉ </mo>\n<mo mathvariant=\"normal\"> ≘ </mo>\n<mtext> KaTeX </mtext>\n</mrow>\n</math>"
+  },
+  {
+    "name": "\\\\text fonts become mathvariant 1",
+    "latex": "\\text{roman\\textit{italic\\textbf{bold italic}}\\textbf{bold}\\textsf{ss\\textit{italic\\textbf{bold italic}}\\textbf{bold}}\\texttt{tt\\textit{italic\\textbf{bold italic}}\\textbf{bold}}}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mtext> roman </mtext>\n<mrow>\n<mtext mathvariant=\"italic\"> italic </mtext>\n<mrow>\n<mtext mathvariant=\"bold-italic\"> bold </mtext>\n<mtext>\n</mtext>\n<mtext mathvariant=\"bold-italic\"> italic </mtext>\n</mrow>\n</mrow>\n<mtext mathvariant=\"bold\"> bold </mtext>\n<mrow>\n<mtext mathvariant=\"sans-serif\"> ss </mtext>\n<mrow>\n<mtext mathvariant=\"sans-serif-italic\"> italic </mtext>\n<mrow>\n<mtext mathvariant=\"sans-serif-bold-italic\"> bold </mtext>\n<mtext>\n</mtext>\n<mtext mathvariant=\"sans-serif-bold-italic\"> italic </mtext>\n</mrow>\n</mrow>\n<mtext mathvariant=\"bold-sans-serif\"> bold </mtext>\n</mrow>\n<mrow>\n<mtext mathvariant=\"monospace\"> tt </mtext>\n<mrow>\n<mtext mathvariant=\"monospace\"> italic </mtext>\n<mrow>\n<mtext mathvariant=\"monospace\"> bold </mtext>\n<mtext>\n</mtext>\n<mtext mathvariant=\"monospace\"> italic </mtext>\n</mrow>\n</mrow>\n<mtext mathvariant=\"monospace\"> bold </mtext>\n</mrow>\n</mrow>\n</math>"
+  },
+  {
+    "name": "accents turn into <mover accent=\"true\"> in MathML 1",
+    "latex": "über fiancée",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mover accent=\"true\">\n<mi> u </mi>\n<mo> ¨ </mo>\n</mover>\n<mi> b </mi>\n<mi> e </mi>\n<mi> r </mi>\n<mi> f </mi>\n<mi> i </mi>\n<mi> a </mi>\n<mi> n </mi>\n<mi> c </mi>\n<mover accent=\"true\">\n<mi> e </mi>\n<mo> ˊ </mo>\n</mover>\n<mi> e </mi>\n</mrow>\n</math>"
+  },
+  {
+    "name": "ligatures render properly 1",
+    "latex": "\\text{\\`\\`\\`Hi----&#x27;&#x27;&#x27;}--\\texttt{\\`\\`\\`Hi----&#x27;&#x27;&#x27;}\\text{\\tt \\`\\`\\`Hi----&#x27;&#x27;&#x27;}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mtext> “‘Hi—-”’ </mtext>\n<mo> − </mo>\n<mo> − </mo>\n<mtext mathvariant=\"monospace\"> \\`\\`‘Hi----&#x27;&#x27;’\\`\\`‘Hi----&#x27;&#x27;’ </mtext>\n</mrow>\n</math>"
+  },
+  {
+    "name": "normal spaces render normally 1",
+    "latex": "\\kern1em\\kern1ex",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mspace width=\"1em\">\n</mspace>\n<mspace width=\"0.431em\">\n</mspace>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should build the CD environment properly 1",
+    "latex": "\\begin{CD} A @&gt;a&gt;&gt; B\\\\ @VVbV @VVcV\\\\ C @&gt;d&gt;&gt; D \\end{CD}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\" >\n<mtable rowspacing=\"0.25em\" columnalign=\"center center center\" columnspacing=\"0.5em\" >\n<mtr>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mi> A </mi>\n</mstyle>\n</mtd>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<munderover>\n<mo stretchy=\"true\" minsize=\"3.0em\" > → </mo>\n<mpadded width=\"+0.6em\" lspace=\"0.3em\" >\n<mrow>\n</mrow>\n</mpadded>\n<mpadded width=\"+0.6em\" lspace=\"0.3em\" >\n<mi> a </mi>\n</mpadded>\n</munderover>\n</mstyle>\n</mtd>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mi> B </mi>\n</mstyle>\n</mtd>\n</mtr>\n<mtr>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mrow>\n<mrow>\n<mstyle displaystyle=\"false\" scriptlevel=\"1\" >\n<mpadded width=\"0\" lspace=\"-1width\" voffset=\"0.7em\" >\n<mrow>\n<mrow>\n</mrow>\n</mrow>\n</mpadded>\n</mstyle>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"1.8em\" maxsize=\"1.8em\" > ↓ </mo>\n<mstyle displaystyle=\"false\" scriptlevel=\"1\" >\n<mpadded width=\"0\" voffset=\"0.7em\" >\n<mrow>\n<mi> b </mi>\n</mrow>\n</mpadded>\n</mstyle>\n</mrow>\n</mrow>\n</mstyle>\n</mtd>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n</mstyle>\n</mtd>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mrow>\n<mrow>\n<mstyle displaystyle=\"false\" scriptlevel=\"1\" >\n<mpadded width=\"0\" lspace=\"-1width\" voffset=\"0.7em\" >\n<mrow>\n<mrow>\n</mrow>\n</mrow>\n</mpadded>\n</mstyle>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"1.8em\" maxsize=\"1.8em\" > ↓ </mo>\n<mstyle displaystyle=\"false\" scriptlevel=\"1\" >\n<mpadded width=\"0\" voffset=\"0.7em\" >\n<mrow>\n<mi> c </mi>\n</mrow>\n</mpadded>\n</mstyle>\n</mrow>\n</mrow>\n</mstyle>\n</mtd>\n</mtr>\n<mtr>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mi> C </mi>\n</mstyle>\n</mtd>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<munderover>\n<mo stretchy=\"true\" minsize=\"3.0em\" > → </mo>\n<mpadded width=\"+0.6em\" lspace=\"0.3em\" >\n<mrow>\n</mrow>\n</mpadded>\n<mpadded width=\"+0.6em\" lspace=\"0.3em\" >\n<mi> d </mi>\n</mpadded>\n</munderover>\n</mstyle>\n</mtd>\n<mtd>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mi> D </mi>\n</mstyle>\n</mtd>\n</mtr>\n<mtr>\n</mtr>\n</mtable>\n</math>"
+  },
+  {
+    "name": "should concatenate digits into single <mn> 1",
+    "latex": "\\sin{\\alpha}=0.34=.34^1",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mi> sin </mi>\n<mo> ⁡ </mo>\n<mi> α </mi>\n<mo> = </mo>\n<mn> 0.34 </mn>\n<mo> = </mo>\n<msup>\n<mn> .34 </mn>\n<mn> 1 </mn>\n</msup>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should concatenate digits into single <mn> 2",
+    "latex": "1{,}000{,}000",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mn> 1,000,000 </mn>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should generate <mphantom> nodes for \\\\phantom 1",
+    "latex": "\\phantom{x}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mphantom>\n<mi> x </mi>\n</mphantom>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should generate the right types of nodes 1",
+    "latex": "\\sin{x}+1\\;\\text{a}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mi> sin </mi>\n<mo> ⁡ </mo>\n<mi> x </mi>\n<mo> + </mo>\n<mn> 1 </mn>\n<mtext>\n</mtext>\n<mtext> a </mtext>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should make prime operators into <mo> nodes 1",
+    "latex": "f&#x27;",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<msup>\n<mi> f </mi>\n<mo mathvariant=\"normal\" lspace=\"0em\" rspace=\"0em\" > ′ </mo>\n</msup>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should output \\\\limsup_{x \\\\rightarrow \\\\infty} correctly in \\\\textstyle 1",
+    "latex": "\\limsup_{x \\rightarrow \\infty}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<msub>\n<mrow>\n<mi mathvariant=\"normal\"> lim sup </mi>\n<mo> ⁡ </mo>\n</mrow>\n<mrow>\n<mi> x </mi>\n<mo> → </mo>\n<mi mathvariant=\"normal\"> ∞ </mi>\n</mrow>\n</msub>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should output \\\\limsup_{x \\\\rightarrow \\\\infty} in displaymode correctly 1",
+    "latex": "\\limsup_{x \\rightarrow \\infty}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\" >\n<mrow>\n<munder>\n<mrow>\n<mi mathvariant=\"normal\"> lim sup </mi>\n<mo> ⁡ </mo>\n</mrow>\n<mrow>\n<mi> x </mi>\n<mo> → </mo>\n<mi mathvariant=\"normal\"> ∞ </mi>\n</mrow>\n</munder>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should render boldsymbol with the correct mathvariants 1",
+    "latex": "\\boldsymbol{Ax2k\\omega\\Omega\\imath+}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mi>\n<mrow>\n<mi mathvariant=\"bold-italic\"> A </mi>\n<mi mathvariant=\"bold-italic\"> x </mi>\n<mn mathvariant=\"bold\"> 2 </mn>\n<mi mathvariant=\"bold-italic\"> k </mi>\n<mi mathvariant=\"bold-italic\"> ω </mi>\n<mi mathvariant=\"bold\"> Ω </mi>\n<mi mathvariant=\"bold\"> ı </mi>\n<mo mathvariant=\"bold-italic\"> + </mo>\n</mrow>\n</mi>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should render mathchoice as if there was nothing 1",
+    "latex": "\\displaystyle\\mathchoice{\\sum_{k = 0}^{\\infty} x^k}{T}{S}{SS}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<mrow>\n<munderover>\n<mo> ∑ </mo>\n<mrow>\n<mi> k </mi>\n<mo> = </mo>\n<mn> 0 </mn>\n</mrow>\n<mi mathvariant=\"normal\"> ∞ </mi>\n</munderover>\n<msup>\n<mi> x </mi>\n<mi> k </mi>\n</msup>\n</mrow>\n</mstyle>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should render mathchoice as if there was nothing 2",
+    "latex": "\\mathchoice{D}{\\sum_{k = 0}^{\\infty} x^k}{S}{SS}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<msubsup>\n<mo> ∑ </mo>\n<mrow>\n<mi> k </mi>\n<mo> = </mo>\n<mn> 0 </mn>\n</mrow>\n<mi mathvariant=\"normal\"> ∞ </mi>\n</msubsup>\n<msup>\n<mi> x </mi>\n<mi> k </mi>\n</msup>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should render mathchoice as if there was nothing 3",
+    "latex": "x_{\\mathchoice{D}{T}{\\sum_{k = 0}^{\\infty} x^k}{SS}}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<msub>\n<mi> x </mi>\n<mi> T </mi>\n</msub>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should render mathchoice as if there was nothing 4",
+    "latex": "x_{y_{\\mathchoice{D}{T}{S}{\\sum_{k = 0}^{\\infty} x^k}}}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<msub>\n<mi> x </mi>\n<msub>\n<mi> y </mi>\n<mi> T </mi>\n</msub>\n</msub>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should set href attribute for href appropriately 1",
+    "latex": "\\href{http://example.org}{\\alpha}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mi href=\"http://example.org\"> α </mi>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should size delimiters correctly 1",
+    "latex": "(M) \\big(M\\big) \\Big(M\\Big) \\bigg(M\\bigg) \\Bigg(M\\Bigg)",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mo stretchy=\"false\"> ( </mo>\n<mi> M </mi>\n<mo stretchy=\"false\"> ) </mo>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"1.2em\" maxsize=\"1.2em\" > ( </mo>\n<mi> M </mi>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"1.2em\" maxsize=\"1.2em\" > ) </mo>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"1.8em\" maxsize=\"1.8em\" > ( </mo>\n<mi> M </mi>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"1.8em\" maxsize=\"1.8em\" > ) </mo>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"2.4em\" maxsize=\"2.4em\" > ( </mo>\n<mi> M </mi>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"2.4em\" maxsize=\"2.4em\" > ) </mo>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"3em\" maxsize=\"3em\" > ( </mo>\n<mi> M </mi>\n<mo fence=\"false\" stretchy=\"true\" minsize=\"3em\" maxsize=\"3em\" > ) </mo>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should use <menclose> for colorbox 1",
+    "latex": "\\colorbox{red}{b}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mpadded width=\"+6pt\" height=\"+6pt\" lspace=\"3pt\" voffset=\"3pt\" mathbackground=\"red\" >\n<mtext> b </mtext>\n</mpadded>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should use <mpadded> for raisebox 1",
+    "latex": "\\raisebox{0.25em}{b}",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mpadded voffset=\"0.25em\">\n<mstyle scriptlevel=\"0\" displaystyle=\"false\" >\n<mtext> b </mtext>\n</mstyle>\n</mpadded>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should use <msupsub> for integrals 1",
+    "latex": "\\displaystyle\\int_a^b + \\oiint_a^b + \\oiiint_a^b",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<msubsup>\n<mo> ∫ </mo>\n<mi> a </mi>\n<mi> b </mi>\n</msubsup>\n<mo> + </mo>\n<msubsup>\n<mo> ∯ </mo>\n<mi> a </mi>\n<mi> b </mi>\n</msubsup>\n<mo> + </mo>\n<msubsup>\n<mo> ∰ </mo>\n<mi> a </mi>\n<mi> b </mi>\n</msubsup>\n</mstyle>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should use <msupsub> for regular operators 1",
+    "latex": "\\textstyle\\sum_a^b",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mstyle scriptlevel=\"0\" displaystyle=\"false\" >\n<msubsup>\n<mo> ∑ </mo>\n<mi> a </mi>\n<mi> b </mi>\n</msubsup>\n</mstyle>\n</mrow>\n</math>"
+  },
+  {
+    "name": "should use <munderover> for large operators 1",
+    "latex": "\\displaystyle\\sum_a^b",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mstyle scriptlevel=\"0\" displaystyle=\"true\" >\n<munderover>\n<mo> ∑ </mo>\n<mi> a </mi>\n<mi> b </mi>\n</munderover>\n</mstyle>\n</mrow>\n</math>"
+  },
+  {
+    "name": "special spaces render specially 1",
+    "latex": "\\,\\thinspace\\:\\&gt;\\medspace\\;\\thickspace\\!\\negthinspace\\negmedspace\\negthickspace\\mkern1mu\\mkern3mu\\mkern4mu\\mkern5mu\\mkern-1mu\\mkern-3mu\\mkern-4mu\\mkern-5mu",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n<mrow>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext> ⁣ </mtext>\n<mtext> ⁣ </mtext>\n<mtext> ⁣ </mtext>\n<mtext> ⁣ </mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext>\n</mtext>\n<mtext> ⁣ </mtext>\n<mtext> ⁣ </mtext>\n<mtext> ⁣ </mtext>\n<mtext> ⁣ </mtext>\n</mrow>\n</math>"
+  },
+  {
+    "name": "tags use <mlabeledtr> 1",
+    "latex": "\\tag{hi} x+y^2",
+    "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\" >\n<mtable width=\"100%\">\n<mtr>\n<mtd width=\"50%\">\n</mtd>\n<mtd>\n<mrow>\n<mi> x </mi>\n<mo> + </mo>\n<msup>\n<mi> y </mi>\n<mn> 2 </mn>\n</msup>\n</mrow>\n</mtd>\n<mtd width=\"50%\">\n</mtd>\n<mtd>\n<mtext> (hi) </mtext>\n</mtd>\n</mtr>\n</mtable>\n</math>"
+  }
+]

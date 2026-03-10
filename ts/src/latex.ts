@@ -301,8 +301,17 @@ class Parser {
 
   /** Parse a single item, possibly with sub/superscripts. */
   parseItem(): MathMLElement | null {
-    const base = this.parseAtom();
-    if (!base) return null;
+    let base = this.parseAtom();
+
+    // Handle bare sub/superscripts (e.g. ^2) with an empty base
+    if (!base) {
+      const t = this.peek();
+      if (t && (t.type === '^' || t.type === '_')) {
+        base = elem('mi');
+      } else {
+        return null;
+      }
+    }
 
     let sub: MathMLElement | null = null;
     let sup: MathMLElement | null = null;

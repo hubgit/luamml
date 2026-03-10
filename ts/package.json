@@ -10,7 +10,8 @@
   },
   "scripts": {
     "generate-parsers": "node scripts/generate-parsers.mjs",
-    "build": "npm run generate-parsers && tsc",
+    "copy-fixtures": "mkdir -p dist/test/fixtures && cp src/test/fixtures/*.json dist/test/fixtures/",
+    "build": "npm run generate-parsers && tsc && npm run copy-fixtures",
     "test": "node --test dist/test/*.js",
     "pretest": "npm run build"
   },
