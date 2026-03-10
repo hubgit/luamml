@@ -127,16 +127,231 @@ function normalizeMacros(macros: Record<string, string | MacroDef>): Map<string,
   return result;
 }
 
+/** Read a command name starting at position i (after the backslash). Returns [name, newPos]. */
+function readCommandName(str: string, pos: number): [string, number] {
+  let name = '';
+  let i = pos;
+  if (i < str.length && /[a-zA-Z]/.test(str[i])) {
+    while (i < str.length && /[a-zA-Z]/.test(str[i])) {
+      name += str[i];
+      i++;
+    }
+    // Skip trailing whitespace after command name
+    while (i < str.length && /[ \t\n\r]/.test(str[i])) i++;
+  } else if (i < str.length) {
+    name = str[i];
+    i++;
+  }
+  return [name, i];
+}
+
+/** Read a braced group at position i. Returns [content, newPos]. */
+function readBracedArg(str: string, pos: number): [string, number] {
+  let i = pos;
+  while (i < str.length && /[ \t\n\r]/.test(str[i])) i++;
+  if (i >= str.length || str[i] !== '{') return ['', i];
+  i++; // consume {
+  let depth = 1;
+  let content = '';
+  while (i < str.length && depth > 0) {
+    if (str[i] === '{') depth++;
+    else if (str[i] === '}') {
+      depth--;
+      if (depth === 0) { i++; break; }
+    }
+    content += str[i];
+    i++;
+  }
+  return [content, i];
+}
+
+/** Read a single token (for macro arguments). Returns [token, newPos]. */
+function readSingleToken(str: string, pos: number): [string, number] {
+  let i = pos;
+  while (i < str.length && /[ \t\n\r]/.test(str[i])) i++;
+  if (i >= str.length) return ['', i];
+  if (str[i] === '{') return readBracedArg(str, i);
+  if (str[i] === '\\') {
+    i++;
+    const [name, newPos] = readCommandName(str, i);
+    return ['\\' + name, newPos];
+  }
+  return [str[i], i + 1];
+}
+
+/**
+ * Process inline macro definitions (\def, \let, \newcommand, \renewcommand,
+ * \gdef, \xdef, \edef, \DeclareMathOperator) and remove them from the input.
+ */
+function processInlineDefs(input: string, macros: Map<string, MacroDef>): string {
+  let result = input;
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    let i = 0;
+    let out = '';
+
+    while (i < result.length) {
+      if (result[i] !== '\\') { out += result[i]; i++; continue; }
+
+      const cmdStart = i;
+      i++;
+      const [cmdName, afterCmd] = readCommandName(result, i);
+      i = afterCmd;
+
+      // \def\foo{expansion} or \def\foo#1#2{expansion with #1 and #2}
+      if (cmdName === 'def' || cmdName === 'gdef' || cmdName === 'xdef' || cmdName === 'edef') {
+        changed = true;
+        // Read the macro name
+        if (i < result.length && result[i] === '\\') {
+          i++;
+          const [macroName, afterName] = readCommandName(result, i);
+          i = afterName;
+          // Count #n parameter tokens
+          let argCount = 0;
+          while (i < result.length && result[i] === '#') {
+            i++; // skip #
+            if (i < result.length && /[0-9]/.test(result[i])) {
+              argCount = Math.max(argCount, parseInt(result[i]));
+              i++;
+            }
+          }
+          // Read expansion body
+          const [expansion, afterBody] = readBracedArg(result, i);
+          i = afterBody;
+          macros.set(macroName, { args: argCount, expansion });
+        }
+        continue;
+      }
+
+      // \let\foo=\bar  or  \let\foo\bar  or  \let\foo=x
+      if (cmdName === 'let') {
+        changed = true;
+        if (i < result.length && result[i] === '\\') {
+          i++;
+          const [macroName, afterName] = readCommandName(result, i);
+          i = afterName;
+          // Optional =
+          if (i < result.length && result[i] === '=') i++;
+          while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
+          // Read the value (a command or single char)
+          let value = '';
+          if (i < result.length && result[i] === '\\') {
+            i++;
+            const [valName, afterVal] = readCommandName(result, i);
+            i = afterVal;
+            value = '\\' + valName;
+          } else if (i < result.length) {
+            value = result[i];
+            i++;
+          }
+          macros.set(macroName, { args: 0, expansion: value });
+        }
+        continue;
+      }
+
+      // \newcommand\foo{expansion}  or  \newcommand{\foo}{expansion}
+      // \newcommand\foo[n]{expansion}  or  \newcommand{\foo}[n]{expansion}
+      // Also \renewcommand and \providecommand
+      if (cmdName === 'newcommand' || cmdName === 'renewcommand' || cmdName === 'providecommand') {
+        changed = true;
+        let macroName = '';
+        // Read macro name: either \foo or {\foo}
+        while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
+        if (i < result.length && result[i] === '{') {
+          i++; // skip {
+          if (i < result.length && result[i] === '\\') {
+            i++;
+            const [name, afterName] = readCommandName(result, i);
+            macroName = name;
+            i = afterName;
+          }
+          while (i < result.length && result[i] !== '}') i++;
+          if (i < result.length) i++; // skip }
+        } else if (i < result.length && result[i] === '\\') {
+          i++;
+          const [name, afterName] = readCommandName(result, i);
+          macroName = name;
+          i = afterName;
+        }
+        // Optional [n] argument count
+        let argCount = 0;
+        while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
+        if (i < result.length && result[i] === '[') {
+          i++;
+          let numStr = '';
+          while (i < result.length && result[i] !== ']') {
+            numStr += result[i]; i++;
+          }
+          if (i < result.length) i++; // skip ]
+          argCount = parseInt(numStr) || 0;
+        }
+        // Read expansion body
+        const [expansion, afterBody] = readBracedArg(result, i);
+        i = afterBody;
+        if (macroName) {
+          macros.set(macroName, { args: argCount, expansion });
+        }
+        continue;
+      }
+
+      // \DeclareMathOperator{\foo}{name} or \DeclareMathOperator*{\foo}{name}
+      if (cmdName === 'DeclareMathOperator') {
+        changed = true;
+        // Optional *
+        if (i < result.length && result[i] === '*') i++;
+        // Read macro name
+        const [macroBody, afterMacro] = readBracedArg(result, i);
+        i = afterMacro;
+        const macroName = macroBody.replace(/^\\/, '');
+        // Read operator name
+        const [opName, afterOp] = readBracedArg(result, i);
+        i = afterOp;
+        if (macroName) {
+          macros.set(macroName, { args: 0, expansion: `\\operatorname{${opName}}` });
+        }
+        continue;
+      }
+
+      // \expandafter — just skip it (it's a TeX primitive for macro ordering)
+      if (cmdName === 'expandafter') {
+        changed = true;
+        continue;
+      }
+
+      // \noexpand — just skip it
+      if (cmdName === 'noexpand') {
+        changed = true;
+        continue;
+      }
+
+      // \relax — just skip it
+      if (cmdName === 'relax') {
+        changed = true;
+        continue;
+      }
+
+      // Not a definition command — output as-is
+      out += result.slice(cmdStart, i);
+    }
+
+    result = out;
+  }
+  return result;
+}
+
 function expandMacros(input: string, macros: Map<string, MacroDef>): string {
-  if (macros.size === 0) return input;
+  // First, process inline definitions (\def, \let, \newcommand, etc.)
+  let result = processInlineDefs(input, macros);
+
+  if (macros.size === 0) return result;
 
   const MAX_ITERATIONS = 100;
-  let result = input;
 
   for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
     let expanded = false;
 
-    // Scan for command names that match a macro
     let i = 0;
     let out = '';
     while (i < result.length) {
@@ -144,19 +359,8 @@ function expandMacros(input: string, macros: Map<string, MacroDef>): string {
         i++;
         if (i >= result.length) { out += '\\'; break; }
 
-        // Read command name
-        let name = '';
-        if (/[a-zA-Z]/.test(result[i])) {
-          while (i < result.length && /[a-zA-Z]/.test(result[i])) {
-            name += result[i];
-            i++;
-          }
-          // Skip trailing whitespace
-          while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
-        } else {
-          name = result[i];
-          i++;
-        }
+        const [name, afterName] = readCommandName(result, i);
+        i = afterName;
 
         const def = macros.get(name);
         if (def) {
@@ -164,50 +368,12 @@ function expandMacros(input: string, macros: Map<string, MacroDef>): string {
           if (def.args === 0) {
             out += def.expansion;
           } else {
-            // Extract arguments
             const args: string[] = [];
             for (let a = 0; a < def.args; a++) {
-              // Skip whitespace
-              while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
-              if (i >= result.length) {
-                args.push('');
-              } else if (result[i] === '{') {
-                // Braced argument
-                i++;
-                let depth = 1;
-                let arg = '';
-                while (i < result.length && depth > 0) {
-                  if (result[i] === '{') depth++;
-                  else if (result[i] === '}') {
-                    depth--;
-                    if (depth === 0) { i++; break; }
-                  }
-                  arg += result[i];
-                  i++;
-                }
-                args.push(arg);
-              } else {
-                // Single token argument
-                if (result[i] === '\\') {
-                  let cmd = '\\';
-                  i++;
-                  if (i < result.length && /[a-zA-Z]/.test(result[i])) {
-                    while (i < result.length && /[a-zA-Z]/.test(result[i])) {
-                      cmd += result[i];
-                      i++;
-                    }
-                  } else if (i < result.length) {
-                    cmd += result[i];
-                    i++;
-                  }
-                  args.push(cmd);
-                } else {
-                  args.push(result[i]);
-                  i++;
-                }
-              }
+              const [arg, afterArg] = readSingleToken(result, i);
+              args.push(arg);
+              i = afterArg;
             }
-            // Substitute #1, #2, ... in expansion
             let exp = def.expansion;
             for (let a = 0; a < args.length; a++) {
               exp = exp.replaceAll(`#${a + 1}`, args[a]);
@@ -276,6 +442,26 @@ class Parser {
       if (!t) break;
       if (t.type === '}' || t.type === '&' || t.type === 'newline') break;
       if (t.type === 'command' && (t.name === 'right' || t.name === 'end')) break;
+
+      // Infix fraction operators: \over, \atop, \choose, \above
+      if (t.type === 'command' && (t.name === 'over' || t.name === 'atop' ||
+          t.name === 'choose' || t.name === 'above')) {
+        this.advance();
+        const num = items.length === 1 && typeof items[0] !== 'string'
+          ? items[0] : elem('mrow', items);
+        const denom = this.parseExpression();
+        if (t.name === 'atop' || t.name === 'above') {
+          return elem('mfrac', [num, denom], { linethickness: '0' });
+        }
+        if (t.name === 'choose') {
+          return elem('mrow', [
+            elem('mo', ['('], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+            elem('mfrac', [num, denom], { linethickness: '0' }),
+            elem('mo', [')'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+          ]);
+        }
+        return elem('mfrac', [num, denom]);
+      }
 
       // Style switches apply to the rest of the group
       if (t.type === 'command' && isStyleSwitch(t.name)) {
@@ -442,7 +628,8 @@ class Parser {
     if (t?.type === '{') return this.parseGroup();
     if (t?.type === 'char') {
       this.advance();
-      return this.makeCharElement(t.value);
+      // Single-token argument: don't do digit joining (e.g. \frac12 → \frac{1}{2})
+      return this.makeCharElementSingle(t.value);
     }
     if (t?.type === 'command') {
       this.advance();
@@ -450,6 +637,14 @@ class Parser {
       if (result) return result;
     }
     throw new ParseError('Expected argument');
+  }
+
+  /** Create a MathML element for a single character (no digit joining). */
+  private makeCharElementSingle(ch: string): MathMLElement {
+    if (/[a-zA-Z]/.test(ch)) return elem('mi', [ch]);
+    if (/[0-9]/.test(ch)) return elem('mn', [ch]);
+    if (ch === '-') return elem('mo', ['\u2212']);
+    return elem('mo', [ch]);
   }
 
   /** Parse a command (backslash already consumed). */
@@ -684,6 +879,11 @@ class Parser {
   }
 
   private parseOperatorname(): MathMLElement {
+    // Check for \operatorname* (limits variant)
+    const star = this.peek();
+    if (star?.type === 'char' && (star as { type: 'char'; value: string }).value === '*') {
+      this.advance();
+    }
     this.expect('{');
     let name = '';
     while (true) {

@@ -1,0 +1,2066 @@
+[
+  {
+    "name": "katex-spec: A parser - should ignore whitespace",
+    "latex": "x    y"
+  },
+  {
+    "name": "katex-spec: A parser - should ignore whitespace in atom",
+    "latex": "x   ^ y"
+  },
+  {
+    "name": "katex-spec: A mathinner parser - should not fail",
+    "latex": "\\mathinner{\\langle{\\psi}\\rangle}"
+  },
+  {
+    "name": "katex-spec: A mathinner parser - should not fail",
+    "latex": "\\frac 1 {\\mathinner{\\langle{\\psi}\\rangle}}"
+  },
+  {
+    "name": "katex-spec: A \\\\KaTeX parser - should not fail",
+    "latex": "\\KaTeX"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail on superscripts",
+    "latex": "x^2"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail on subscripts",
+    "latex": "x_3"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail on both subscripts and superscripts",
+    "latex": "x^2_3"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail on both subscripts and superscripts",
+    "latex": "x_2^3"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail when there is no nucleus",
+    "latex": "^3"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail when there is no nucleus",
+    "latex": "^3+"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail when there is no nucleus",
+    "latex": "_2"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail when there is no nucleus",
+    "latex": "^3_2"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail when there is no nucleus",
+    "latex": "_2^3"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x^{2+3}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x_{3-2}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x^{2+3}_3"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x^2_{3-2}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x^{2+3}_{3-2}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x_{3-2}^{2+3}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x_3^{2+3}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work correctly with {}s",
+    "latex": "x_{3-2}^2"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work with nested super/subscripts",
+    "latex": "x^{x^x}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work with nested super/subscripts",
+    "latex": "x^{x_x}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work with nested super/subscripts",
+    "latex": "x_{x^x}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work with nested super/subscripts",
+    "latex": "x_{x_x}"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should work with Unicode (sub|super)script characters",
+    "latex": "A² + B²⁺³ + ¹²C + E₂³ + F₂₊₃"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should not fail if \\\\relax is in an atom",
+    "latex": "\\hskip1em\\relax^2"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should skip \\\\relax in super/subscripts",
+    "latex": "x^\\relax 2"
+  },
+  {
+    "name": "katex-spec: A subscript and superscript parser - should skip \\\\relax in super/subscripts",
+    "latex": "x_\\relax 2"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should parse when the limit control directly follows an op node",
+    "latex": "\\int\\limits_2^2 3"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should parse when the limit control directly follows an op node",
+    "latex": "\\sum\\nolimits_3^4 4"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should parse when the limit control is in the sup/sub area of an op node",
+    "latex": "\\int_2^2\\limits"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should parse when the limit control is in the sup/sub area of an op node",
+    "latex": "\\int^2\\nolimits_2"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should parse when the limit control is in the sup/sub area of an op node",
+    "latex": "\\int_2\\limits^2"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should allow multiple limit controls in the sup/sub area of an op node",
+    "latex": "\\int_2\\nolimits^2\\limits 3"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should allow multiple limit controls in the sup/sub area of an op node",
+    "latex": "\\int\\nolimits\\limits_2^2"
+  },
+  {
+    "name": "katex-spec: A parser with limit controls - should allow multiple limit controls in the sup/sub area of an op node",
+    "latex": "\\int\\limits\\limits\\limits_2^2"
+  },
+  {
+    "name": "katex-spec: A group parser - should not fail",
+    "latex": "{xy}"
+  },
+  {
+    "name": "katex-spec: A \\\\begingroup...\\\\endgroup parser - should not fail",
+    "latex": "\\begingroup xy \\endgroup"
+  },
+  {
+    "name": "katex-spec: A \\\\begingroup...\\\\endgroup parser - should not affect spacing in math mode",
+    "latex": "\\begingroup x+ \\endgroup y"
+  },
+  {
+    "name": "katex-spec: An implicit group parser - should not fail",
+    "latex": "\\Large x"
+  },
+  {
+    "name": "katex-spec: An implicit group parser - should not fail",
+    "latex": "abc {abc \\Large xyz} abc"
+  },
+  {
+    "name": "katex-spec: A function parser - should parse no argument functions",
+    "latex": "\\div"
+  },
+  {
+    "name": "katex-spec: A function parser - should parse 1 argument functions",
+    "latex": "\\blue x"
+  },
+  {
+    "name": "katex-spec: A function parser - should parse 2 argument functions",
+    "latex": "\\frac 1 2"
+  },
+  {
+    "name": "katex-spec: A function parser - should parse a function with a number right after it",
+    "latex": "\\frac12"
+  },
+  {
+    "name": "katex-spec: A function parser - should parse some functions with text right after it",
+    "latex": "\\;x"
+  },
+  {
+    "name": "katex-spec: An over/brace/brack parser - should handle \\\\textstyle correctly",
+    "latex": "\\textstyle 1 \\over 2"
+  },
+  {
+    "name": "katex-spec: An over/brace/brack parser - should handle \\\\textstyle correctly",
+    "latex": "{\\textstyle 1} \\over 2"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\frac{x}{y}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\dfrac{x}{y}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\tfrac{x}{y}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\cfrac{x}{y}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\genfrac ( ] {0.06em}{0}{a}{b+c}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\genfrac ( ] {0.8pt}{}{a}{b+c}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\genfrac {} {} {0.8pt}{}{a}{b+c}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should not fail",
+    "latex": "\\genfrac [ {} {0.8pt}{}{a}{b+c}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should render \\\\tfrac like \\\\textstyle\\\\frac",
+    "latex": "x_{\\tfrac{1}{2}}"
+  },
+  {
+    "name": "katex-spec: A genfrac builder - should render \\\\dfrac like \\\\displaystyle\\\\frac in subscripts",
+    "latex": "x_{\\dfrac{a}{b}}"
+  },
+  {
+    "name": "katex-spec: A infix builder - should not fail",
+    "latex": "a \\over b"
+  },
+  {
+    "name": "katex-spec: A infix builder - should not fail",
+    "latex": "a \\atop b"
+  },
+  {
+    "name": "katex-spec: A infix builder - should not fail",
+    "latex": "a \\choose b"
+  },
+  {
+    "name": "katex-spec: A infix builder - should not fail",
+    "latex": "a \\brace b"
+  },
+  {
+    "name": "katex-spec: A infix builder - should not fail",
+    "latex": "a \\brack b"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse math within text group",
+    "latex": "\\text{graph: $y = mx + b$}"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse math within text group",
+    "latex": "\\text{graph: \\(y = mx + b\\)}"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse math within text within math within text",
+    "latex": "\\text{hello $x + \\text{world $y$} + z$}"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse math within text within math within text",
+    "latex": "\\text{hello \\(x + \\text{world $y$} + z\\)}"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse math within text within math within text",
+    "latex": "\\text{hello $x + \\text{world \\(y\\)} + z$}"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse math within text within math within text",
+    "latex": "\\text{hello \\(x + \\text{world \\(y\\)} + z\\)}"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse spacing functions",
+    "latex": "a b\\, \\; \\! \\: \\> ~ \\thinspace \\medspace \\quad \\"
+  },
+  {
+    "name": "katex-spec: A text parser - should parse spacing functions",
+    "latex": "\\enspace \\thickspace \\qquad \\space \\nobreakspace"
+  },
+  {
+    "name": "katex-spec: A text parser - should omit spaces after commands",
+    "latex": "\\text{\\textellipsis !}"
+  },
+  {
+    "name": "katex-spec: A text parser - should handle ⋮ and \\\\vdots",
+    "latex": "\\text{a \\vdots b ⋮ d}"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\lang\\N\\darr\\R\\dArr\\Z\\Darr\\alef\\rang"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\alefsym\\uarr\\Alpha\\uArr\\Beta\\Uarr\\Chi"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\clubs\\diamonds\\hearts\\spades\\cnums\\Complex"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\Dagger\\empty\\harr\\Epsilon\\hArr\\Eta\\Harr\\exist"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\image\\larr\\infin\\lArr\\Iota\\Larr\\isin\\Kappa"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\Mu\\lrarr\\natnums\\lrArr\\Nu\\Lrarr\\Omicron"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\real\\rarr\\plusmn\\rArr\\reals\\Rarr\\Reals\\Rho"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\text{\\sect}\\sdot\\sub\\sube\\supe"
+  },
+  {
+    "name": "katex-spec: A texvc builder - should not fail",
+    "latex": "\\Tau\\thetasym\\weierp\\Zeta"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail on a text argument",
+    "latex": "\\rlap{\\,/}{=}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail on a text argument",
+    "latex": "\\mathrlap{\\,/}{=}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail on a text argument",
+    "latex": "{=}\\llap{/\\,}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail on a text argument",
+    "latex": "{=}\\mathllap{/\\,}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail on a text argument",
+    "latex": "\\sum_{\\clap{ABCDEFG}}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail on a text argument",
+    "latex": "\\sum_{\\mathclap{ABCDEFG}}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail if math version is used",
+    "latex": "\\mathrlap{\\frac{a}{b}}{=}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail if math version is used",
+    "latex": "{=}\\mathllap{\\frac{a}{b}}"
+  },
+  {
+    "name": "katex-spec: An lap parser - should not fail if math version is used",
+    "latex": "\\sum_{\\mathclap{\\frac{a}{b}}}"
+  },
+  {
+    "name": "katex-spec: A rule parser - should parse in text mode",
+    "latex": "\\text{a\\rule{1em}{2em}b}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse a simple environment",
+    "latex": "\\begin{matrix}a&b\\c&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse an environment with argument",
+    "latex": "\\begin{array}{cc}a&b\\c&d\\end{array}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse and build an empty environment",
+    "latex": "\\begin{aligned}\\end{aligned}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse and build an empty environment",
+    "latex": "\\begin{matrix}\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse an environment with hlines",
+    "latex": "\\begin{matrix}\\hline a&b\\ \\hline c&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse an environment with hlines",
+    "latex": "\\begin{matrix}\\hline a&b\\cr \\hline c&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should parse an environment with hlines",
+    "latex": "\\begin{matrix}\\hdashline a&b\\ \\hdashline c&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should cooperate with infix notation",
+    "latex": "\\begin{matrix}0&1\\over2&3\\4&5&6\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow \\\\cr and \\\\\\\\ as a line terminator",
+    "latex": "\\begin{matrix}a&b\\cr c&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should not allow \\\\cr to scan for an optional size argument",
+    "latex": "\\begin{matrix}a&b\\cr[c]&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should not treat [ after space as optional argument to \\\\\\\\",
+    "latex": "\\begin{matrix}a&b\\ [c]&d\\end{matrix}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should not treat [ after space as optional argument to \\\\\\\\",
+    "latex": "a\\ [b]"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{matrix*}[r] a & -1 \\ -1 & d \\end{matrix*}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{pmatrix*}[r] a & -1 \\ -1 & d \\end{pmatrix*}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{bmatrix*}[r] a & -1 \\ -1 & d \\end{bmatrix*}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{Bmatrix*}[r] a & -1 \\ -1 & d \\end{Bmatrix*}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{vmatrix*}[r] a & -1 \\ -1 & d \\end{vmatrix*}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{Vmatrix*}[r] a & -1 \\ -1 & d \\end{Vmatrix*}"
+  },
+  {
+    "name": "katex-spec: A begin/end parser - should allow an optional argument in {matrix*} and company.",
+    "latex": "\\begin{matrix*} a & -1 \\ -1 & d \\end{matrix*}"
+  },
+  {
+    "name": "katex-spec: A sqrt parser - should build sized square roots",
+    "latex": "\\Large\\sqrt[3]{x}"
+  },
+  {
+    "name": "katex-spec: A sqrt parser - should expand argument if optional argument doesn",
+    "latex": "\\sqrt\\foo"
+  },
+  {
+    "name": "katex-spec: A sqrt parser - should not expand argument if optional argument exists",
+    "latex": "\\sqrt[2]\\foo"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should work",
+    "latex": "\\frac 2 3"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should parse multiple primes correctly",
+    "latex": "x''''"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should parse multiple primes correctly",
+    "latex": "x_2''"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should parse multiple primes correctly",
+    "latex": "x''_2"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should succeed when sup/subscripts come after whole functions",
+    "latex": "\\sqrt2^3"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should succeed when sup/subscripts come after whole functions",
+    "latex": "\\frac23^4"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should succeed with a sqrt around a text/frac",
+    "latex": "\\sqrt \\frac x y"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should succeed with a sqrt around a text/frac",
+    "latex": "\\sqrt \\text x"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should succeed with a sqrt around a text/frac",
+    "latex": "x^\\frac x y"
+  },
+  {
+    "name": "katex-spec: A TeX-compliant parser - should succeed with a sqrt around a text/frac",
+    "latex": "x_\\text x"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\int_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\iint_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\iiint_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\int\\nolimits_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\iint\\nolimits_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\iiint\\nolimits_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\oint_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\oiint_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\oiiint_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\oint\\nolimits_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\oiint\\nolimits_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\oiiint\\nolimits_i^n"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\mathop{\\int}"
+  },
+  {
+    "name": "katex-spec: An op symbol builder - should not fail",
+    "latex": "\\mathop \\int"
+  },
+  {
+    "name": "katex-spec: A style change parser - should not fail",
+    "latex": "\\displaystyle x"
+  },
+  {
+    "name": "katex-spec: A style change parser - should not fail",
+    "latex": "\\textstyle x"
+  },
+  {
+    "name": "katex-spec: A style change parser - should not fail",
+    "latex": "\\scriptstyle x"
+  },
+  {
+    "name": "katex-spec: A style change parser - should not fail",
+    "latex": "\\scriptscriptstyle x"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathrm x"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathbb x"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathit x"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathnormal x"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathrm {x + 1}"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathbb {x + 1}"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathit {x + 1}"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathrm, \\\\mathbb, \\\\mathit, and \\\\mathnormal",
+    "latex": "\\mathnormal {x + 1}"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathcal and \\\\mathfrak",
+    "latex": "\\mathcal{ABC123}"
+  },
+  {
+    "name": "katex-spec: A font parser - should parse \\\\mathcal and \\\\mathfrak",
+    "latex": "\\mathfrak{abcABC123}"
+  },
+  {
+    "name": "katex-spec: A font parser - should be allowed in the argument",
+    "latex": "e^\\mathbf{x}"
+  },
+  {
+    "name": "katex-spec: A font parser - old-style fonts work like new-style fonts",
+    "latex": "\\rm xyz"
+  },
+  {
+    "name": "katex-spec: A font parser - old-style fonts work like new-style fonts",
+    "latex": "\\sf xyz"
+  },
+  {
+    "name": "katex-spec: A font parser - old-style fonts work like new-style fonts",
+    "latex": "\\tt xyz"
+  },
+  {
+    "name": "katex-spec: A font parser - old-style fonts work like new-style fonts",
+    "latex": "\\bf xyz"
+  },
+  {
+    "name": "katex-spec: A font parser - old-style fonts work like new-style fonts",
+    "latex": "\\it xyz"
+  },
+  {
+    "name": "katex-spec: A font parser - old-style fonts work like new-style fonts",
+    "latex": "\\cal xyz"
+  },
+  {
+    "name": "katex-spec: A \\\\pmb builder - should not fail",
+    "latex": "\\pmb{\\mu}"
+  },
+  {
+    "name": "katex-spec: A \\\\pmb builder - should not fail",
+    "latex": "\\pmb{=}"
+  },
+  {
+    "name": "katex-spec: A \\\\pmb builder - should not fail",
+    "latex": "\\pmb{+}"
+  },
+  {
+    "name": "katex-spec: A \\\\pmb builder - should not fail",
+    "latex": "\\pmb{\\frac{x^2}{x_1}}"
+  },
+  {
+    "name": "katex-spec: A \\\\pmb builder - should not fail",
+    "latex": "\\pmb{}"
+  },
+  {
+    "name": "katex-spec: A \\\\pmb builder - should not fail",
+    "latex": "\\def\\x{1}\\pmb{\\x\\def\\x{2}}"
+  },
+  {
+    "name": "katex-spec: A raise parser - should parse and build text in \\\\raisebox",
+    "latex": "\\raisebox{5pt}{text}"
+  },
+  {
+    "name": "katex-spec: A raise parser - should parse and build text in \\\\raisebox",
+    "latex": "\\raisebox{-5pt}{text}"
+  },
+  {
+    "name": "katex-spec: A raise parser - should parse and build math in non-strict \\\\vcenter",
+    "latex": "\\vcenter{\\frac a b}"
+  },
+  {
+    "name": "katex-spec: A comment parser - should not parse a comment without newline in strict mode",
+    "latex": "x%y"
+  },
+  {
+    "name": "katex-spec: An accent parser - should not fail",
+    "latex": "\\vec{x}"
+  },
+  {
+    "name": "katex-spec: An accent parser - should not fail",
+    "latex": "\\vec{x^2}"
+  },
+  {
+    "name": "katex-spec: An accent parser - should not fail",
+    "latex": "\\vec{x}^2"
+  },
+  {
+    "name": "katex-spec: An accent parser - should not fail",
+    "latex": "\\vec x"
+  },
+  {
+    "name": "katex-spec: An accent parser - should not fail",
+    "latex": "\\underbar{X}"
+  },
+  {
+    "name": "katex-spec: An accent parser - should parse stretchy, shifty accents",
+    "latex": "\\widehat{x}"
+  },
+  {
+    "name": "katex-spec: An accent parser - should parse stretchy, shifty accents",
+    "latex": "\\widecheck{x}"
+  },
+  {
+    "name": "katex-spec: An accent parser - should parse stretchy, non-shifty accents",
+    "latex": "\\overrightarrow{x}"
+  },
+  {
+    "name": "katex-spec: An accent builder - should not fail",
+    "latex": "\\vec{x}_2"
+  },
+  {
+    "name": "katex-spec: An accent builder - should not fail",
+    "latex": "\\vec{x}_2^2"
+  },
+  {
+    "name": "katex-spec: A stretchy and shifty accent builder - should not fail",
+    "latex": "\\widehat{AB}"
+  },
+  {
+    "name": "katex-spec: A stretchy and shifty accent builder - should not fail",
+    "latex": "\\widecheck{AB}"
+  },
+  {
+    "name": "katex-spec: A stretchy and shifty accent builder - should not fail",
+    "latex": "\\widehat{AB}^2"
+  },
+  {
+    "name": "katex-spec: A stretchy and shifty accent builder - should not fail",
+    "latex": "\\widehat{AB}_2"
+  },
+  {
+    "name": "katex-spec: A stretchy and shifty accent builder - should not fail",
+    "latex": "\\widehat{AB}_2^2"
+  },
+  {
+    "name": "katex-spec: A stretchy and non-shifty accent builder - should not fail",
+    "latex": "\\overrightarrow{AB}"
+  },
+  {
+    "name": "katex-spec: A stretchy and non-shifty accent builder - should not fail",
+    "latex": "\\overrightarrow{AB}^2"
+  },
+  {
+    "name": "katex-spec: A stretchy and non-shifty accent builder - should not fail",
+    "latex": "\\overrightarrow{AB}_2"
+  },
+  {
+    "name": "katex-spec: A stretchy and non-shifty accent builder - should not fail",
+    "latex": "\\overrightarrow{AB}_2^2"
+  },
+  {
+    "name": "katex-spec: An under-accent parser - should not fail",
+    "latex": "\\underrightarrow{x}"
+  },
+  {
+    "name": "katex-spec: An under-accent parser - should not fail",
+    "latex": "\\underrightarrow{x^2}"
+  },
+  {
+    "name": "katex-spec: An under-accent parser - should not fail",
+    "latex": "\\underrightarrow{x}^2"
+  },
+  {
+    "name": "katex-spec: An under-accent parser - should not fail",
+    "latex": "\\underrightarrow x"
+  },
+  {
+    "name": "katex-spec: An under-accent builder - should not fail",
+    "latex": "\\underrightarrow{x}_2"
+  },
+  {
+    "name": "katex-spec: An under-accent builder - should not fail",
+    "latex": "\\underrightarrow{x}_2^2"
+  },
+  {
+    "name": "katex-spec: An extensible arrow parser - should not fail",
+    "latex": "\\xrightarrow{x}"
+  },
+  {
+    "name": "katex-spec: An extensible arrow parser - should not fail",
+    "latex": "\\xrightarrow{x^2}"
+  },
+  {
+    "name": "katex-spec: An extensible arrow parser - should not fail",
+    "latex": "\\xrightarrow{x}^2"
+  },
+  {
+    "name": "katex-spec: An extensible arrow parser - should not fail",
+    "latex": "\\xrightarrow x"
+  },
+  {
+    "name": "katex-spec: An extensible arrow parser - should not fail",
+    "latex": "\\xrightarrow[under]{over}"
+  },
+  {
+    "name": "katex-spec: An extensible arrow builder - should not fail",
+    "latex": "\\xrightarrow{x}_2"
+  },
+  {
+    "name": "katex-spec: An extensible arrow builder - should not fail",
+    "latex": "\\xrightarrow{x}_2^2"
+  },
+  {
+    "name": "katex-spec: A horizontal brace parser - should not fail",
+    "latex": "\\overbrace{x}"
+  },
+  {
+    "name": "katex-spec: A horizontal brace parser - should not fail",
+    "latex": "\\overbrace{x^2}"
+  },
+  {
+    "name": "katex-spec: A horizontal brace parser - should not fail",
+    "latex": "\\overbrace{x}^2"
+  },
+  {
+    "name": "katex-spec: A horizontal brace parser - should not fail",
+    "latex": "\\overbrace x"
+  },
+  {
+    "name": "katex-spec: A horizontal brace parser - should not fail",
+    "latex": "\\underbrace{x}_2"
+  },
+  {
+    "name": "katex-spec: A horizontal brace parser - should not fail",
+    "latex": "\\underbrace{x}_2^2"
+  },
+  {
+    "name": "katex-spec: A boxed parser - should not fail",
+    "latex": "\\boxed{x}"
+  },
+  {
+    "name": "katex-spec: A boxed parser - should not fail",
+    "latex": "\\boxed{x^2}"
+  },
+  {
+    "name": "katex-spec: A boxed parser - should not fail",
+    "latex": "\\boxed{x}^2"
+  },
+  {
+    "name": "katex-spec: A boxed parser - should not fail",
+    "latex": "\\boxed x"
+  },
+  {
+    "name": "katex-spec: A boxed builder - should not fail",
+    "latex": "\\boxed{x}_2"
+  },
+  {
+    "name": "katex-spec: A boxed builder - should not fail",
+    "latex": "\\boxed{x}_2^2"
+  },
+  {
+    "name": "katex-spec: A colorbox parser - should not fail, given a text argument",
+    "latex": "\\colorbox{red}{a b}"
+  },
+  {
+    "name": "katex-spec: A colorbox parser - should not fail, given a text argument",
+    "latex": "\\colorbox{red}{x}^2"
+  },
+  {
+    "name": "katex-spec: A colorbox parser - should not fail, given a text argument",
+    "latex": "\\colorbox{red} x"
+  },
+  {
+    "name": "katex-spec: A colorbox parser - should parse a color",
+    "latex": "\\colorbox{#197}{a b}"
+  },
+  {
+    "name": "katex-spec: A colorbox parser - should parse a color",
+    "latex": "\\colorbox{#1a9b7c}{a b}"
+  },
+  {
+    "name": "katex-spec: A colorbox builder - should not fail",
+    "latex": "\\colorbox{red}{a b}^2"
+  },
+  {
+    "name": "katex-spec: An fcolorbox parser - should not fail, given a text argument",
+    "latex": "\\fcolorbox{blue}{yellow}{a b}"
+  },
+  {
+    "name": "katex-spec: An fcolorbox parser - should not fail, given a text argument",
+    "latex": "\\fcolorbox{blue}{yellow}{x}^2"
+  },
+  {
+    "name": "katex-spec: An fcolorbox parser - should not fail, given a text argument",
+    "latex": "\\fcolorbox{blue}{yellow} x"
+  },
+  {
+    "name": "katex-spec: An fcolorbox parser - should parse a color",
+    "latex": "\\fcolorbox{blue}{#197}{a b}"
+  },
+  {
+    "name": "katex-spec: An fcolorbox parser - should parse a color",
+    "latex": "\\fcolorbox{blue}{#1a9b7c}{a b}"
+  },
+  {
+    "name": "katex-spec: A fcolorbox builder - should not fail",
+    "latex": "\\fcolorbox{blue}{yellow}{a b}^2"
+  },
+  {
+    "name": "katex-spec: A strike-through parser - should not fail",
+    "latex": "\\cancel{x}"
+  },
+  {
+    "name": "katex-spec: A strike-through parser - should not fail",
+    "latex": "\\cancel{x^2}"
+  },
+  {
+    "name": "katex-spec: A strike-through parser - should not fail",
+    "latex": "\\cancel{x}^2"
+  },
+  {
+    "name": "katex-spec: A strike-through parser - should not fail",
+    "latex": "\\cancel x"
+  },
+  {
+    "name": "katex-spec: A strike-through builder - should not fail",
+    "latex": "\\cancel{x}_2"
+  },
+  {
+    "name": "katex-spec: A strike-through builder - should not fail",
+    "latex": "\\cancel{x}_2^2"
+  },
+  {
+    "name": "katex-spec: A strike-through builder - should not fail",
+    "latex": "\\sout{x}"
+  },
+  {
+    "name": "katex-spec: A strike-through builder - should not fail",
+    "latex": "\\sout{x}^2"
+  },
+  {
+    "name": "katex-spec: A strike-through builder - should not fail",
+    "latex": "\\sout{x}_2"
+  },
+  {
+    "name": "katex-spec: A strike-through builder - should not fail",
+    "latex": "\\sout{x}_2^2"
+  },
+  {
+    "name": "katex-spec: A actuarial angle parser - should not fail in math mode",
+    "latex": "a_{\\angl{n}}"
+  },
+  {
+    "name": "katex-spec: A actuarial angle builder - should not fail",
+    "latex": "a_{\\angl{n}i}"
+  },
+  {
+    "name": "katex-spec: A actuarial angle builder - should not fail",
+    "latex": "a_{\\angl n}"
+  },
+  {
+    "name": "katex-spec: A actuarial angle builder - should not fail",
+    "latex": "a_\\angln"
+  },
+  {
+    "name": "katex-spec: \\\\phase - should not fail in math mode",
+    "latex": "\\phase{-78.2^\\circ}"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\phantom{x}"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\phantom{x^2}"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\phantom{x}^2"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\phantom x"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\hphantom{x}"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\hphantom{x^2}"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\hphantom{x}^2"
+  },
+  {
+    "name": "katex-spec: A phantom parser - should not fail",
+    "latex": "\\hphantom x"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash{x}"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash{x^2}"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash{x}^2"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash x"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[b]{x}"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[b]{x^2}"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[b]{x}^2"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[b] x"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[]{x}"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[]{x^2}"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[]{x}^2"
+  },
+  {
+    "name": "katex-spec: A smash parser - should not fail",
+    "latex": "\\smash[] x"
+  },
+  {
+    "name": "katex-spec: An optional argument parser - should not fail",
+    "latex": "\\frac[1]{2}{3}"
+  },
+  {
+    "name": "katex-spec: An optional argument parser - should not fail",
+    "latex": "\\rule[0.2em]{1em}{1em}"
+  },
+  {
+    "name": "katex-spec: An optional argument parser - should work with sqrts with optional arguments",
+    "latex": "\\sqrt[3]{2}"
+  },
+  {
+    "name": "katex-spec: An optional argument parser - should work when the optional argument is missing",
+    "latex": "\\sqrt{2}"
+  },
+  {
+    "name": "katex-spec: An optional argument parser - should work when the optional argument is missing",
+    "latex": "\\rule{1em}{2em}"
+  },
+  {
+    "name": "katex-spec: A subarray environment - should accept only a single alignment character",
+    "latex": "\\begin{subarray}{c}a \\ b\\end{subarray}"
+  },
+  {
+    "name": "katex-spec: A substack function - should build",
+    "latex": "\\sum_{\\substack{ 0<i<m \\ 0<j<n }}  P(i,j)"
+  },
+  {
+    "name": "katex-spec: A substack function - should accommodate macros in the argument",
+    "latex": "\\sum_{\\substack{ 0<i<\\varPi \\ 0<j<\\pi }}  P(i,j)"
+  },
+  {
+    "name": "katex-spec: A substack function - should accommodate an empty argument",
+    "latex": "\\sum_{\\substack{}}  P(i,j)"
+  },
+  {
+    "name": "katex-spec: A smallmatrix environment - should build",
+    "latex": "\\begin{smallmatrix} a & b \\ c & d \\end{smallmatrix}"
+  },
+  {
+    "name": "katex-spec: An aligned environment - should parse its input",
+    "latex": "\\begin{aligned}a&=b&c&=d\\e&=f\\end{aligned}"
+  },
+  {
+    "name": "katex-spec: An aligned environment - should allow cells in brackets",
+    "latex": "\\begin{aligned}[a]&[b]\\ [c]&[d]\\end{aligned}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{gather}a+b\\c+d\\end{gather}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{gather*}a+b\\c+d\\end{gather*}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{align}a&=b+c\\d+e&=f\\end{align}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{align*}a&=b+c\\d+e&=f\\end{align*}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{alignat}{2}10&x+ &3&y = 2\\3&x+&13&y = 4\\end{alignat}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{alignat*}{2}10&x+ &3&y = 2\\3&x+&13&y = 4\\end{alignat*}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{equation}a=b+c\\end{equation}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{equation}\\begin{split}a &=b+c\\&=e+f\\end{split}\\end{equation}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{split}a &=b+c\\&=e+f\\end{split}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build if in display mode",
+    "latex": "\\begin{CD}A @<a<< B @>>b> C @>>> D\\@. @| @AcAA @VVdV \\@. E @= F @>>> G\\end{CD}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{gather}\\end{gather}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{gather*}\\end{gather*}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{align}\\end{align}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{align*}\\end{align*}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{alignat}{2}\\end{alignat}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{alignat*}{2}\\end{alignat*}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{equation}\\end{equation}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{split}\\end{split}"
+  },
+  {
+    "name": "katex-spec: AMS environments - should build an empty environment",
+    "latex": "\\begin{CD}\\end{CD}"
+  },
+  {
+    "name": "katex-spec: operatorname support - should not fail",
+    "latex": "\\operatorname{x*Π∑\\Pi\\sum\\frac a b}"
+  },
+  {
+    "name": "katex-spec: operatorname support - should not fail",
+    "latex": "\\operatorname*{x*Π∑\\Pi\\sum\\frac a b}"
+  },
+  {
+    "name": "katex-spec: operatorname support - should not fail",
+    "latex": "\\operatorname*{x*Π∑\\Pi\\sum\\frac a b}_y x"
+  },
+  {
+    "name": "katex-spec: operatorname support - should not fail",
+    "latex": "\\operatorname*{x*Π∑\\Pi\\sum\\frac a b}\\limits_y x"
+  },
+  {
+    "name": "katex-spec: operatorname support - should not fail",
+    "latex": "\\operatorname{sn}\\limits_{b>c}(b+c)"
+  },
+  {
+    "name": "katex-spec: href and url commands - should parse its input",
+    "latex": "\\href{http://example.com/}{\\sin}"
+  },
+  {
+    "name": "katex-spec: href and url commands - should parse its input",
+    "latex": "\\url{http://example.com/}"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow empty URLs",
+    "latex": "\\href{}{example here}"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow empty URLs",
+    "latex": "\\url{}"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow single-character URLs",
+    "latex": "\\href%end"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow single-character URLs",
+    "latex": "\\url%end"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow single-character URLs",
+    "latex": "\\url end"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow spaces single-character URLs",
+    "latex": "\\href %end"
+  },
+  {
+    "name": "katex-spec: href and url commands - should allow spaces single-character URLs",
+    "latex": "\\url %end"
+  },
+  {
+    "name": "katex-spec: A raw text parser - should return null for a omitted optional string",
+    "latex": "\\includegraphics{https://cdn.kastatic.org/images/apple-touch-icon-57x57-precomposed.new.png}"
+  },
+  {
+    "name": "katex-spec: A parser that does not throw on unsupported commands - should still parse on unrecognized control sequences",
+    "latex": "\\error"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in superscripts and subscripts",
+    "latex": "2_\\error"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in superscripts and subscripts",
+    "latex": "3^{\\error}_\\error"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in superscripts and subscripts",
+    "latex": "\\int\\nolimits^\\error_\\error"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in fractions",
+    "latex": "\\frac{345}{\\error}"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in fractions",
+    "latex": "\\frac\\error{\\error}"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in square roots",
+    "latex": "\\sqrt\\error"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in square roots",
+    "latex": "\\sqrt{234\\error}"
+  },
+  {
+    "name": "katex-spec: should allow unrecognized controls sequences anywhere, including - in text boxes",
+    "latex": "\\text{\\error}"
+  },
+  {
+    "name": "katex-spec: The symbol table integrity - should treat certain symbols as synonyms",
+    "latex": "<"
+  },
+  {
+    "name": "katex-spec: The symbol table integrity - should treat certain symbols as synonyms",
+    "latex": ">"
+  },
+  {
+    "name": "katex-spec: The symbol table integrity - should treat certain symbols as synonyms",
+    "latex": "\\left<\\frac{1}{x}\\right>"
+  },
+  {
+    "name": "katex-spec: A macro expander - should produce individual tokens",
+    "latex": "e^\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - should preserve leading spaces inside macro definition",
+    "latex": "\\text{\\foo}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should preserve leading spaces inside macro argument",
+    "latex": "\\text{\\foo{ x}}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should ignore expanded spaces in math mode",
+    "latex": "\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - should consume spaces after control-word macro",
+    "latex": "\\text{\\foo }"
+  },
+  {
+    "name": "katex-spec: A macro expander - should not consume spaces after control-word expansion",
+    "latex": "\\text{\\ }"
+  },
+  {
+    "name": "katex-spec: A macro expander - should consume spaces after \\\\relax",
+    "latex": "\\text{\\relax }"
+  },
+  {
+    "name": "katex-spec: A macro expander - should consume spaces after control-word function",
+    "latex": "\\text{\\KaTeX }"
+  },
+  {
+    "name": "katex-spec: A macro expander - should preserve spaces after control-symbol macro",
+    "latex": "\\text{\\% y}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should preserve spaces after control-symbol function",
+    "latex": "\\text{\\' }"
+  },
+  {
+    "name": "katex-spec: A macro expander - should consume spaces between arguments",
+    "latex": "\\text{\\foo 1 2}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should consume spaces between arguments",
+    "latex": "\\text{\\foo {1} {2}}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should allow for multiple expansion",
+    "latex": "1\\foo2"
+  },
+  {
+    "name": "katex-spec: A macro expander - should allow properly nested group for macro argument",
+    "latex": "\\foo{e^{x_{12}+3}}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should delay expansion if preceded by \\\\expandafter",
+    "latex": "\\def\\foo{x}\\def\\bar{\\def\\foo{y}}\\expandafter\\bar\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - should not expand if preceded by \\\\noexpand",
+    "latex": "\\noexpand\\foo y"
+  },
+  {
+    "name": "katex-spec: A macro expander - should not expand if preceded by \\\\noexpand",
+    "latex": "\\expandafter\\foo\\noexpand\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - should not expand if preceded by \\\\noexpand",
+    "latex": "\\noexpand\\frac xy"
+  },
+  {
+    "name": "katex-spec: A macro expander - should not expand if preceded by \\\\noexpand",
+    "latex": "\\noexpand\\def\\foo{xy}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - should allow for space macro argument (text version)",
+    "latex": "\\text{\\foo\\bar}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should allow for space second argument (text version)",
+    "latex": "\\text{\\foo\\bar\\bar}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should treat \\\\relax as empty argument",
+    "latex": "\\text{\\foo\\relax x}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build \\\\overset and \\\\underset",
+    "latex": "\\overset{f}{\\rightarrow} Y"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build \\\\overset and \\\\underset",
+    "latex": "\\underset{f}{\\rightarrow} Y"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build \\\\iff, \\\\implies, \\\\impliedby",
+    "latex": "X \\iff Y"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build \\\\iff, \\\\implies, \\\\impliedby",
+    "latex": "X \\implies Y"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build \\\\iff, \\\\implies, \\\\impliedby",
+    "latex": "X \\impliedby Y"
+  },
+  {
+    "name": "katex-spec: A macro expander - should allow aliasing characters",
+    "latex": "x’=c"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\@firstoftwo should consume both, and avoid errors",
+    "latex": "\\@firstoftwo{yes}{no}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\@firstoftwo should consume both, and avoid errors",
+    "latex": "\\@firstoftwo{yes}{1'_2^3}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\@ifstar should consume star but nothing else",
+    "latex": "\\@ifstar{yes}{no}*!"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\@ifstar should consume star but nothing else",
+    "latex": "\\@ifstar{yes}{no}?!"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\@ifnextchar should not consume nonspaces",
+    "latex": "\\@ifnextchar!{yes}{no}!!"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\@ifnextchar should not consume nonspaces",
+    "latex": "\\@ifnextchar!{yes}{no}?!"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work immediately",
+    "latex": "\\TextOrMath{text}{math}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work after other math",
+    "latex": "x+\\TextOrMath{text}{math}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work immediately after \\\\text",
+    "latex": "\\text{\\TextOrMath{text}{math}}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work later after \\\\text",
+    "latex": "\\text{hello \\TextOrMath{text}{math}}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work immediately after $",
+    "latex": "\\text{$\\TextOrMath{text}{math}$}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work later after $",
+    "latex": "\\text{$x+\\TextOrMath{text}{math}$}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\TextOrMath should work in a macro passed to \\\\text",
+    "latex": "\\text\\mode"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build Unicode private area characters",
+    "latex": "\\gvertneqq\\lvertneqq\\ngeqq\\ngeqslant\\nleqq"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build Unicode private area characters",
+    "latex": "\\nleqslant\\nshortmid\\nshortparallel\\varsubsetneq"
+  },
+  {
+    "name": "katex-spec: A macro expander - should build Unicode private area characters",
+    "latex": "\\varsubsetneqq\\varsupsetneq\\varsupsetneqq"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros",
+    "latex": "\\gdef\\foo{x^2}\\foo+\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros",
+    "latex": "\\gdef\\foo{hi}\\foo+\\text\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros",
+    "latex": "\\gdef\\foo#1#2{(#1,#2)}\\foo 1 2+\\foo 3 4"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros",
+    "latex": "\\gdef\\foo#1#2#3#4#5#6#7#8#9{}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros with delimited parameter",
+    "latex": "\\gdef\\foo|#1||{#1}\\text{\\foo| x y ||}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros with delimited parameter",
+    "latex": "\\gdef\\foo#1|#2{#1+#2}\\foo 1 2 |34"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\gdef defines macros with delimited parameter",
+    "latex": "\\gdef\\foo#1#{#1}\\foo1^{23}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\xdef should expand definition",
+    "latex": "\\def\\foo{a}\\xdef\\bar{\\foo}\\def\\foo{}\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\xdef should expand definition",
+    "latex": "\\def\\foo{a}\\xdef\\bar{\\def\\noexpand\\foo{}}\\foo\\bar\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\xdef should expand definition",
+    "latex": "\\def\\foo{a}\\xdef\\bar{\\foo\\noexpand\\foo}\\def\\foo{b}\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\def should be handled in Parser",
+    "latex": "\\gdef\\foo{1}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\global needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\global\\def\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\global needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\global\\edef\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\global needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\def\\DEF{\\def}\\global\\DEF\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\global needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\global\\global\\def\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\global needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\global\\long\\def\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\long needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\long\\def\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\long needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\long\\edef\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\long needs to followed by macro prefixes, \\\\def or \\\\edef",
+    "latex": "\\long\\global\\def\\foo{}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\textbf arguments do generate groups",
+    "latex": "\\def\\x{1}\\x\\textbf{\\x\\def\\x{2}\\x}\\x"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\def doesn",
+    "latex": "\\def\\foo{1}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\let\\foo=\\frac\\def\\frac{}\\foo12"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\def\\foo{1}\\let\\bar\\foo\\def\\foo{2}\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\let\\foo=\\kern\\edef\\bar{\\foo1em}\\let\\kern=\\relax\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\let\\foo{\\sqrt\\foo1}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\let\\equals==a\\equals b"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\let\\foo=x\\noexpand\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let copies the definition",
+    "latex": "\\let\\foo=x\\edef\\bar{\\foo}\\def\\foo{y}\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\let should consume one optional space after equals sign",
+    "latex": "\\def\\:{\\let\\space= }\\: \\text{\\space}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\futurelet should parse correctly",
+    "latex": "\\futurelet\\foo\\frac1{2+\\foo}"
+  },
+  {
+    "name": "katex-spec: A macro expander - macros argument can simulate \\\\let",
+    "latex": "\\int"
+  },
+  {
+    "name": "katex-spec: A macro expander - macros argument can simulate \\\\def with arguments",
+    "latex": "\\t x"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\newcommand doesn",
+    "latex": "\\newcommand\\foo{x^2}\\foo+\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\newcommand defines new macros",
+    "latex": "\\newcommand{\\foo}{x^2}\\foo+\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\renewcommand redefines macros",
+    "latex": "\\renewcommand\\bar{x^2}\\bar+\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\renewcommand redefines macros",
+    "latex": "\\renewcommand{\\bar}{x^2}\\bar+\\bar"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\renewcommand redefines macros",
+    "latex": "\\newcommand{\\foo}{1}\\foo\\renewcommand{\\foo}{2}\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\providecommand defines but does not redefine macros",
+    "latex": "\\providecommand\\foo{x^2}\\foo+\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\providecommand defines but does not redefine macros",
+    "latex": "\\providecommand{\\foo}{x^2}\\foo+\\foo"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\newcommand accepts number of arguments",
+    "latex": "\\newcommand\\foo[1]{#1^2}\\foo x+\\foo{y}"
+  },
+  {
+    "name": "katex-spec: A macro expander - \\\\newcommand accepts number of arguments",
+    "latex": "\\newcommand\\foo[10]{#1^2}\\foo 0123456789"
+  },
+  {
+    "name": "katex-spec: A macro expander - should treat \\\\hspace, \\\\hskip like \\\\kern",
+    "latex": "\\hspace{1em}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should treat \\\\hspace, \\\\hskip like \\\\kern",
+    "latex": "\\hskip{1em}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\limsup as expected",
+    "latex": "\\limsup"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\liminf as expected",
+    "latex": "\\liminf"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand AMS log-like symbols as expected",
+    "latex": "\\injlim"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand AMS log-like symbols as expected",
+    "latex": "\\projlim"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand AMS log-like symbols as expected",
+    "latex": "\\varlimsup"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand AMS log-like symbols as expected",
+    "latex": "\\varliminf"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand AMS log-like symbols as expected",
+    "latex": "\\varinjlim"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand AMS log-like symbols as expected",
+    "latex": "\\varprojlim"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\plim as expected",
+    "latex": "\\plim"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\argmin as expected",
+    "latex": "\\argmin"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\argmax as expected",
+    "latex": "\\argmax"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\bra as expected",
+    "latex": "\\bra{\\phi}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\ket as expected",
+    "latex": "\\ket{\\psi}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\braket as expected",
+    "latex": "\\braket{\\phi|\\psi}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\Bra as expected",
+    "latex": "\\Bra{\\phi}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\Ket as expected",
+    "latex": "\\Ket{\\psi}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\Braket as expected",
+    "latex": "\\Braket{ ϕ | \\frac{∂^2}{∂ t^2} | ψ }"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\set as expected",
+    "latex": "\\set{x|x<5|S|}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\set as expected",
+    "latex": "\\set{x||x<5|S|}"
+  },
+  {
+    "name": "katex-spec: A macro expander - should expand \\\\set as expected",
+    "latex": "\\set{x\\|x<5|S|}"
+  },
+  {
+    "name": "katex-spec: \\\\tag support - should work with one tag per row",
+    "latex": "\\begin{align}\\tag{1}x\\&+y\\tag{2}\\end{align}"
+  },
+  {
+    "name": "katex-spec: \\\\tag support - should build",
+    "latex": "\\tag{hi}x+y"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should generate proper class",
+    "latex": "L\\@binrel+xR"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should generate proper class",
+    "latex": "L\\@binrel=xR"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should generate proper class",
+    "latex": "L\\@binrel xxR"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should generate proper class",
+    "latex": "L\\@binrel{+}{x}R"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should generate proper class",
+    "latex": "L\\@binrel{=}{x}R"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should generate proper class",
+    "latex": "L\\@binrel{x}{x}R"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should base on just first character in group",
+    "latex": "L\\@binrel{+x}xR"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should base on just first character in group",
+    "latex": "L\\@binrel{=x}xR"
+  },
+  {
+    "name": "katex-spec: \\\\@binrel automatic bin/rel/ord - should base on just first character in group",
+    "latex": "L\\@binrel{xx}xR"
+  },
+  {
+    "name": "katex-spec: Unicode accents - should support \\\\aa in text mode",
+    "latex": "\\text{\\aa\\AA}"
+  },
+  {
+    "name": "katex-spec: Unicode accents - should parse multi-accented characters",
+    "latex": "ấā́ắ\\text{ấā́ắ}"
+  },
+  {
+    "name": "katex-spec: Unicode accents - should parse accented i",
+    "latex": "íȷ́"
+  },
+  {
+    "name": "katex-spec: Unicode - should parse negated relations",
+    "latex": "∉∤∦≁≆≠≨≩≮≯≰≱⊀⊁⊈⊉⊊⊋⊬⊭⊮⊯⋠⋡⋦⋧⋨⋩⋬⋭⪇⪈⪉⪊⪵⪶⪹⪺⫋⫌"
+  },
+  {
+    "name": "katex-spec: Unicode - should build relations",
+    "latex": "∈∋∝∼∽≂≃≅≈≊≍≎≏≐≑≒≓≖≗≜≡≤≥≦≧≪≫≬≳≷≺≻≼≽≾≿∴∵∣≔≕⩴⋘⋙⟂⊨∌"
+  },
+  {
+    "name": "katex-spec: Unicode - should parse relations",
+    "latex": "⊶⊷"
+  },
+  {
+    "name": "katex-spec: Unicode - should build big operators",
+    "latex": "∏∐∑∫∬∭∮⋀⋁⋂⋃⨀⨁⨂⨄⨆"
+  },
+  {
+    "name": "katex-spec: Unicode - should build more relations",
+    "latex": "⊂⊃⊆⊇⊏⊐⊑⊒⊢⊣⊩⊪⊸⋈⋍⋐⋑⋔⋛⋞⋟⌢⌣⩾⪆⪌⪕⪖⪯⪰⪷⪸⫅⫆≘≙≚≛≝≞≟≲⩽⪅≶⋚⪋"
+  },
+  {
+    "name": "katex-spec: Unicode - should build arrows",
+    "latex": "←↑→↓↔↕↖↗↘↙↚↛↞↠↢↣↦↩↪↫↬↭↮↰↱↶↷↼↽↾↾↿⇀⇁⇂⇃⇄⇆⇇⇈⇉"
+  },
+  {
+    "name": "katex-spec: Unicode - should build more arrows",
+    "latex": "⇊⇋⇌⇍⇎⇏⇐⇑⇒⇓⇔⇕⇚⇛⇝⟵⟶⟷⟸⟹⟺⟼"
+  },
+  {
+    "name": "katex-spec: Unicode - should build delimiters",
+    "latex": "┌x┐ └x┘"
+  },
+  {
+    "name": "katex-spec: The maxExpand setting - should prevent expansion",
+    "latex": "\\gdef\\foo{1}\\foo"
+  },
+  {
+    "name": "katex-spec: Newlines via \\\\\\\\ and \\\\newline - should build \\\\\\\\ without the optional argument and \\\\newline the same",
+    "latex": "hello \\ world"
+  },
+  {
+    "name": "katex-spec: Newlines via \\\\\\\\ and \\\\newline - should not allow \\\\newline to scan for an optional size argument",
+    "latex": "hello \\newline[w]orld"
+  },
+  {
+    "name": "katex-spec: Symbols - should parse \\\\text{\\\\i\\\\j}",
+    "latex": "\\text{\\i\\j}"
+  },
+  {
+    "name": "katex-spec: Symbols - should parse spacing functions in math or text mode",
+    "latex": "A\\;B\\,C\\nobreakspace \\text{A\\;B\\,C\\nobreakspace}"
+  },
+  {
+    "name": "katex-spec: Symbols - should build \\\\minuso",
+    "latex": "\\minuso"
+  },
+  {
+    "name": "katex-spec: Symbols - should render ligature commands like their unicode characters",
+    "latex": "\\text{\\ae\\AE\\oe\\OE\\o\\O\\ss}"
+  },
+  {
+    "name": "katex-spec: strict setting - should allow unicode text when not strict",
+    "latex": "é"
+  },
+  {
+    "name": "katex-spec: strict setting - should allow unicode text when not strict",
+    "latex": "試"
+  },
+  {
+    "name": "katex-spec: strict setting - should always allow unicode text in text mode",
+    "latex": "\\text{é試}"
+  },
+  {
+    "name": "katex-spec: strict setting - should warn about top-level \\\\newline in display mode",
+    "latex": "x\\y"
+  },
+  {
+    "name": "katex-spec: Extending katex by new fonts and symbols - should add font metrics to metrics map and render successfully",
+    "latex": "۹۹^{۱۱}"
+  },
+  {
+    "name": "katex-spec: message - should print the argument using console.log",
+    "latex": "\\message{Hello, world}"
+  },
+  {
+    "name": "katex-spec: errmessage - should print the argument using console.error",
+    "latex": "\\errmessage{Hello, world}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should toggle italics",
+    "latex": "\\emph{foo \\emph{bar}}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should toggle italics within text",
+    "latex": "\\text{\\emph{foo \\emph{bar}}}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should toggle italics within textup",
+    "latex": "\\textup{\\emph{foo \\emph{bar}}}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should toggle italics within textit",
+    "latex": "\\textit{\\emph{foo \\emph{bar}}}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\not=\\not<\\not>\\not\\leq\\not\\geq\\not\\in"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "1 \\over x"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "1+2i \\over 3+4i"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "a+b \\brace c+d"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "a+b \\brack c+d"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\Huge{x}\\small{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\text{a b}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse text with no braces around it",
+    "latex": "\\text x"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should accept math mode tokens after its argument",
+    "latex": "\\text{sin}^2"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\blue{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse a custom color",
+    "latex": "\\textcolor{#fA6}{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse a custom color",
+    "latex": "\\textcolor{#fA6fA6}{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse a custom color",
+    "latex": "\\textcolor{fA6fA6}{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse new colors from the branding guide",
+    "latex": "\\redA{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should use one-argument \\\\color by default",
+    "latex": "\\color{#fA6}xy"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should build correctly with alpha colors",
+    "latex": "\\textcolor{#ff000080}{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should build correctly with alpha colors",
+    "latex": "\\textcolor{#1234ABCD}{z}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should build correctly with alpha colors",
+    "latex": "\\textcolor{#abc8}{w}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse ties in text mode",
+    "latex": "\\text{a~ b}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse normal delimiters",
+    "latex": "\\bigl |"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse normal delimiters",
+    "latex": "\\Biggr \\langle"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\overline{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\rule{1ex}{2em}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\left( \\dfrac{x}{y} \\right)"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse the empty ",
+    "latex": "\\left( \\dfrac{x}{y} \\right."
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse the ",
+    "latex": "\\Bigl ."
+  },
+  {
+    "name": "katex-spec: \\\\emph - should handle \\\\middle",
+    "latex": "\\left( \\dfrac{x}{y} \\middle| \\dfrac{y}{z} \\right)"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should handle multiple \\\\middles",
+    "latex": "\\left( \\dfrac{x}{y} \\middle| \\dfrac{y}{z} \\middle/ \\dfrac{z}{q} \\right)"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should handle nested \\\\middles",
+    "latex": "\\left( a^2 \\middle| \\left( b \\middle/ c \\right) \\right)"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should parse square roots",
+    "latex": "\\sqrt{x}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should not fail",
+    "latex": "\\includegraphics[height=0.9em, totalheight=0.9em, width=0.9em, alt=KA logo]{https://cdn.kastatic.org/images/apple-touch-icon-57x57-precomposed.new.png}"
+  },
+  {
+    "name": "katex-spec: \\\\emph - should support AMS symbols in both text and math mode",
+    "latex": "\\yen\\checkmark\\circledR\\maltese"
+  },
+  {
+    "name": "unicode-spec: unicode - should build all lower case Greek letters",
+    "latex": "αβγδεϵζηθϑικλμνξοπϖρϱςστυφϕχψω"
+  },
+  {
+    "name": "unicode-spec: unicode - should build math upper case Greek letters",
+    "latex": "ΓΔΘΛΞΠΣΥΦΨΩ"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Cyrillic inside \\\\text{}",
+    "latex": "\\text{БГДЖЗЙЛФЦШЫЮЯ}"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Cyrillic outside \\\\text{}",
+    "latex": "БГДЖЗЙЛФЦШЫЮЯ"
+  },
+  {
+    "name": "unicode-spec: unicode - should build CJK inside \\\\text{}",
+    "latex": "\\text{私はバナナです}"
+  },
+  {
+    "name": "unicode-spec: unicode - should build CJK inside \\\\text{}",
+    "latex": "\\text{여보세요}"
+  },
+  {
+    "name": "unicode-spec: unicode - should build CJK outside \\\\text{}",
+    "latex": "私はバナナです"
+  },
+  {
+    "name": "unicode-spec: unicode - should build CJK outside \\\\text{}",
+    "latex": "여보세요"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Devanagari inside \\\\text{}",
+    "latex": "\\text{नमस्ते}"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Devanagari outside \\\\text{}",
+    "latex": "नमस्ते"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Georgian inside \\\\text{}",
+    "latex": "\\text{გამარჯობა}"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Georgian outside \\\\text{}",
+    "latex": "გამარჯობა"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Armenian both inside and outside \\\\text{}",
+    "latex": "ԱԲԳաբգ"
+  },
+  {
+    "name": "unicode-spec: unicode - should build Armenian both inside and outside \\\\text{}",
+    "latex": "\\text{ԱԲԳաբգ}"
+  },
+  {
+    "name": "unicode-spec: unicode - should build extended Latin characters inside \\\\text{}",
+    "latex": "\\text{ěščřžůřťďňőİı}"
+  },
+  {
+    "name": "unicode-spec: unicode - should allow emoji outside strict mode",
+    "latex": "✌"
+  },
+  {
+    "name": "unicode-spec: unicode - should allow emoji outside strict mode",
+    "latex": "\\text{✌}"
+  }
+]
