@@ -484,6 +484,21 @@ class Parser {
       return this.parseBoxed();
     if (name === 'substack')
       return this.parseSubstack();
+    if (name === 'array')
+      return this.parseArrayCommand();
+    if (name === 'displaylines')
+      return this.parseDisplaylines();
+    if (name === 'eqalign')
+      return this.parseEqalign();
+    if (name === 'eqalignno' || name === 'leqalignno')
+      return this.parseEqalign();
+    if (name === 'cases')
+      return this.parseCasesCommand();
+    if (name === 'matrix' || name === 'pmatrix' || name === 'bmatrix' ||
+        name === 'Bmatrix' || name === 'vmatrix' || name === 'Vmatrix')
+      return this.parseMatrixCommand(name);
+    if (name === 'mbox' || name === 'hbox')
+      return this.parseMbox();
 
     // --- Text/font commands ---
 
@@ -728,8 +743,10 @@ class Parser {
       if (t.type === 'char') color += (t as { type: 'char'; value: string }).value;
     }
     this.expect('}');
-    const body = this.parseArgSingle();
-    return elem('mstyle', [body], { mathcolor: color });
+    // \color applies to the rest of the current group/expression, not just next arg
+    const rest = this.parseExpression();
+    const children = rest.tag === 'mrow' ? rest.children : [rest];
+    return elem('mstyle', children, { mathcolor: color });
   }
 
   private parseBoxed(): MathMLElement {
@@ -738,7 +755,22 @@ class Parser {
   }
 
   private parseTextCommand(cmd: string): MathMLElement {
-    // Collect raw text from the braced argument
+    // Collect raw text from argument (braced group or single token)
+    this.skipSpaces();
+    const next = this.peek();
+    if (next && next.type !== '{') {
+      // Single-token argument without braces (e.g. \textrm a)
+      this.advance();
+      let text = '';
+      if (next.type === 'char') text = (next as { type: 'char'; value: string }).value;
+      else if (next.type === 'command') text = (next as { type: 'command'; name: string }).name;
+      const attrs: Record<string, string | number | boolean | undefined> = {};
+      if (cmd === 'textbf') attrs.mathvariant = 'bold';
+      else if (cmd === 'textit') attrs.mathvariant = 'italic';
+      else if (cmd === 'textsf') attrs.mathvariant = 'sans-serif';
+      else if (cmd === 'texttt') attrs.mathvariant = 'monospace';
+      return elem('mtext', [text], attrs);
+    }
     this.expect('{');
     let text = '';
     let depth = 1;
@@ -878,6 +910,19 @@ class Parser {
   }
 
   private parseArray(envName: string): MathMLElement {
+    // Skip optional [pos] argument (e.g., [b], [t])
+    this.skipSpaces();
+    const maybeOpt = this.peek();
+    if (maybeOpt?.type === 'char' &&
+        (maybeOpt as { type: 'char'; value: string }).value === '[') {
+      this.advance();
+      while (true) {
+        const p = this.peek();
+        if (!p) break;
+        this.advance();
+        if (p.type === 'char' && (p as { type: 'char'; value: string }).value === ']') break;
+      }
+    }
     // Read column spec
     this.expect('{');
     let colSpec = '';
@@ -920,6 +965,171 @@ class Parser {
     }
     this.expect('}');
     return elem('mtable', rows);
+  }
+
+  /** Parse \array{...} command (MathJax-style, not \begin{array}). */
+  private parseArrayCommand(): MathMLElement {
+    this.skipSpaces();
+    if (this.peek()?.type === '{') {
+      return this.parseBracedTable();
+    }
+    // Single token argument (e.g., \matrix a)
+    const body = this.parseArgSingle();
+    return elem('mtable', [elem('mtr', [elem('mtd', [body])])]);
+  }
+
+  /** Parse \displaylines{...} command. */
+  private parseDisplaylines(): MathMLElement {
+    const rows = this.parseBracedTableRows();
+    return elem('mtable', rows, { columnalign: 'center' });
+  }
+
+  /** Parse \eqalign{...} and friends. */
+  private parseEqalign(): MathMLElement {
+    const rows = this.parseBracedTableRows();
+    return elem('mtable', rows, { columnalign: 'right left' });
+  }
+
+  /** Parse \cases{...} command (MathJax-style). */
+  private parseCasesCommand(): MathMLElement {
+    const rows = this.parseBracedTableRows();
+    const mtable = elem('mtable', rows, { columnalign: 'left left' });
+    return elem('mrow', [
+      elem('mo', ['{'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+      mtable,
+    ]);
+  }
+
+  /** Parse \matrix{...}, \pmatrix{...} etc. commands (MathJax-style). */
+  private parseMatrixCommand(name: string): MathMLElement {
+    const delimMap: Record<string, [string, string]> = {
+      matrix:   ['', ''],
+      pmatrix:  ['(', ')'],
+      bmatrix:  ['[', ']'],
+      Bmatrix:  ['{', '}'],
+      vmatrix:  ['|', '|'],
+      Vmatrix:  ['\u2016', '\u2016'],
+    };
+    const [leftDelim, rightDelim] = delimMap[name] ?? ['', ''];
+    this.skipSpaces();
+    let rows: MathMLElement[];
+    if (this.peek()?.type === '{') {
+      rows = this.parseBracedTableRows();
+    } else {
+      // Single token argument
+      const body = this.parseArgSingle();
+      rows = [elem('mtr', [elem('mtd', [body])])];
+    }
+    const mtable = elem('mtable', rows);
+
+    if (leftDelim || rightDelim) {
+      const items: (string | MathMLElement)[] = [];
+      if (leftDelim)
+        items.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+      items.push(mtable);
+      if (rightDelim)
+        items.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+      return elem('mrow', items);
+    }
+    return mtable;
+  }
+
+  /** Parse \mbox{...} or \hbox{...}, treating content as text. */
+  private parseMbox(): MathMLElement {
+    this.skipSpaces();
+    const next = this.peek();
+    if (next && next.type !== '{') {
+      // Single-token argument
+      this.advance();
+      const text = next.type === 'char'
+        ? (next as { type: 'char'; value: string }).value : '';
+      return elem('mtext', [text]);
+    }
+    this.expect('{');
+    let text = '';
+    let depth = 1;
+    while (this.pos < this.tokens.length && depth > 0) {
+      const t = this.advance();
+      if (t.type === '{') { depth++; text += '{'; }
+      else if (t.type === '}') {
+        depth--;
+        if (depth === 0) break;
+        text += '}';
+      }
+      else if (t.type === 'char') text += (t as { type: 'char'; value: string }).value;
+      else if (t.type === 'space') text += ' ';
+      else if (t.type === 'newline') text += ' ';
+      else if (t.type === 'command') text += (t as { type: 'command'; name: string }).name;
+    }
+    return elem('mtext', [text]);
+  }
+
+  /** Parse a braced table: {rows with & and \\}. */
+  private parseBracedTable(): MathMLElement {
+    const rows = this.parseBracedTableRows();
+    return elem('mtable', rows);
+  }
+
+  /** Parse rows from a braced group {... & ... \\ ...}. */
+  private parseBracedTableRows(): MathMLElement[] {
+    this.expect('{');
+    const rows: MathMLElement[] = [];
+    let currentCells: MathMLElement[] = [];
+
+    const pushRow = () => {
+      if (currentCells.length > 0 || rows.length > 0) {
+        rows.push(elem('mtr', currentCells.map(c => elem('mtd', [c]))));
+      }
+      currentCells = [];
+    };
+
+    currentCells.push(this.parseExpression());
+
+    while (true) {
+      this.skipSpaces();
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+
+      if (t.type === '&') {
+        this.advance();
+        currentCells.push(this.parseExpression());
+      } else if (t.type === 'newline') {
+        this.advance();
+        // Skip optional [dimension] after \\
+        this.skipOptionalDimension();
+        pushRow();
+        this.skipSpaces();
+        const next = this.peek();
+        if (next && next.type !== '}') {
+          currentCells.push(this.parseExpression());
+        }
+      } else {
+        break;
+      }
+    }
+    pushRow();
+    this.expect('}');
+    return rows;
+  }
+
+  /** Skip an optional [dimension] argument (e.g., \\[1cm]). */
+  private skipOptionalDimension(): void {
+    this.skipSpaces();
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '[') {
+      this.advance();
+      let depth = 1;
+      while (depth > 0) {
+        const p = this.peek();
+        if (!p) break;
+        this.advance();
+        if (p.type === 'char') {
+          const v = (p as { type: 'char'; value: string }).value;
+          if (v === '[') depth++;
+          else if (v === ']') depth--;
+        }
+      }
+    }
   }
 
   /** Parse table rows until \end{envName}. */
@@ -968,6 +1178,7 @@ class Parser {
         currentCells.push(parseCell());
       } else if (t.type === 'newline') {
         this.advance();
+        this.skipOptionalDimension();
         pushRow();
         // Start new row if there's more content
         this.skipSpaces();
@@ -988,12 +1199,26 @@ class Parser {
 // Style helpers
 // ---------------------------------------------------------------------------
 
+/** Old-style font switches (\bf, \it, etc.) that apply to the rest of the group. */
+const fontSwitches: Record<string, string> = {
+  bf: 'bold',
+  it: 'italic',
+  rm: 'normal',
+  sf: 'sans-serif',
+  tt: 'monospace',
+  cal: 'script',
+};
+
 function isStyleSwitch(name: string): boolean {
   return name === 'displaystyle' || name === 'textstyle' ||
-         name === 'scriptstyle' || name === 'scriptscriptstyle';
+         name === 'scriptstyle' || name === 'scriptscriptstyle' ||
+         name in fontSwitches;
 }
 
 function getStyleAttrs(name: string): Record<string, string | number | boolean | undefined> {
+  if (name in fontSwitches) {
+    return { mathvariant: fontSwitches[name] };
+  }
   switch (name) {
     case 'displaystyle':
       return { displaystyle: 'true', scriptlevel: '0' };

@@ -213,6 +213,18 @@ export const symbols: Record<string, SymbolDef> = {
   checkmark:{ char: '\u2713', element: 'mo' },
   complement: { char: '\u2201', element: 'mo' },
 
+  // Additional symbols
+  backslash:  { char: '\\',     element: 'mo' },
+  lmoustache: { char: '\u23B0', element: 'mo' },
+  rmoustache: { char: '\u23B1', element: 'mo' },
+  lgroup:     { char: '\u27EE', element: 'mo' },
+  rgroup:     { char: '\u27EF', element: 'mo' },
+  lbrack:     { char: '[',      element: 'mo' },
+  rbrack:     { char: ']',      element: 'mo' },
+  Vert:       { char: '\u2016', element: 'mo' },
+  lt:         { char: '<',      element: 'mo' },
+  gt:         { char: '>',      element: 'mo' },
+
   // Dots
   ldots:  { char: '\u2026', element: 'mo' },
   cdots:  { char: '\u22EF', element: 'mo' },
@@ -322,6 +334,21 @@ export const delimiters: Record<string, string> = {
   Uparrow: '\u21D1',
   Downarrow: '\u21D3',
   Updownarrow: '\u21D5',
+  // Aliases
+  lbrack: '[',
+  rbrack: ']',
+  lt: '\u27E8',
+  gt: '\u27E9',
+  backslash: '\\',
+  // Moustache and group delimiters
+  lmoustache: '\u23B0',
+  rmoustache: '\u23B1',
+  lgroup: '\u27EE',
+  rgroup: '\u27EF',
+  arrowvert: '|',
+  Arrowvert: '\u2016',
+  bracevert: '|',
+  Vert: '\u2016',
 };
 
 /** mathvariant values for \mathXX commands. */
