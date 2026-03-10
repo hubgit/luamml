@@ -12,6 +12,8 @@ export { mappings, remap_oml, remap_oms, remap_omx } from './legacy-mappings.js'
 export { combiningMap } from './data-combining.js';
 export { stretchySet } from './data-stretchy.js';
 export { properties } from './node-emulation.js';
+export { render, renderToString, ParseError } from './latex.js';
+export type { RenderOptions, MacroDef } from './latex.js';
 export { elem } from './types.js';
 export type {
   MathMLElement,
