@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuaMML vs MathJax vs KaTeX — Benchmark</title>
+
+<!-- KaTeX -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+
+<!-- MathJax -->
+<script>
+  window.MathJax = {
+    startup: { typeset: false },
+    tex: { inlineMath: [] },
+    svg: { fontCache: 'none' },
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+  :root {
+    --bg: #fafafa; --fg: #222; --card: #fff; --border: #ddd;
+    --accent: #2563eb; --good: #16a34a; --mid: #ca8a04; --bad: #dc2626;
+    --bar-a: #3b82f6; --bar-b: #f59e0b; --bar-c: #10b981;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111; --fg: #ddd; --card: #1a1a1a; --border: #333;
+      --accent: #60a5fa;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; padding: 1.5rem; background: var(--bg); color: var(--fg); }
+  h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+  h2 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+  p.subtitle { margin: 0 0 1rem; opacity: 0.7; font-size: 0.9rem; }
+
+  /* Controls */
+  .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  .controls label { font-size: 0.85rem; }
+  .controls input[type=number] { width: 5rem; padding: 0.25rem 0.4rem; }
+  button {
+    padding: 0.4rem 1rem; border: 1px solid var(--accent); border-radius: 4px;
+    background: var(--accent); color: #fff; cursor: pointer; font-size: 0.85rem;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Summary bar chart */
+  .summary { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .summary-card {
+    flex: 1; min-width: 160px; padding: 0.75rem 1rem;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .summary-card .lib { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+  .summary-card .time { font-size: 1.5rem; font-weight: 700; }
+  .summary-card .time small { font-size: 0.8rem; font-weight: 400; opacity: 0.6; }
+
+  /* Results table */
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  th { position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  td.latex { font-family: monospace; white-space: pre-wrap; word-break: break-all; max-width: 260px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.render-cell { min-width: 120px; }
+  .bar-wrap { display: flex; gap: 2px; align-items: center; }
+  .bar { height: 14px; border-radius: 2px; min-width: 2px; }
+  .bar.a { background: var(--bar-a); }
+  .bar.b { background: var(--bar-b); }
+  .bar.c { background: var(--bar-c); }
+  .legend { display: flex; gap: 1rem; font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .legend span::before {
+    content: ''; display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; margin-right: 4px; vertical-align: middle;
+  }
+  .legend .la::before { background: var(--bar-a); }
+  .legend .lb::before { background: var(--bar-b); }
+  .legend .lc::before { background: var(--bar-c); }
+
+  .status { padding: 0.75rem; background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.9rem; margin-bottom: 1rem; }
+
+  /* Category badges */
+  .cat {
+    display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.4rem;
+    border-radius: 3px; background: var(--border); margin-right: 0.25rem;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<h1>LuaMML vs MathJax vs KaTeX</h1>
+<p class="subtitle">Benchmark &amp; visual comparison of LaTeX-to-MathML/SVG rendering</p>
+
+<div class="controls">
+  <label>Iterations: <input type="number" id="iters" value="50" min="1" max="500"></label>
+  <button id="run">Run benchmark</button>
+  <button id="run-visual">Show rendered output</button>
+</div>
+
+<div class="status" id="status">Press <strong>Run benchmark</strong> to start. Make sure the page has fully loaded first.</div>
+
+<div class="summary" id="summary" hidden>
+  <div class="summary-card"><div class="lib" style="color:var(--bar-a)">LuaMML</div><div class="time" id="sum-luamml">—</div></div>
+  <div class="summary-card"><div class="lib" style="color:var(--bar-b)">KaTeX</div><div class="time" id="sum-katex">—</div></div>
+  <div class="summary-card"><div class="lib" style="color:var(--bar-c)">MathJax</div><div class="time" id="sum-mathjax">—</div></div>
+</div>
+
+<div class="legend" id="legend" hidden>
+  <span class="la">LuaMML</span>
+  <span class="lb">KaTeX</span>
+  <span class="lc">MathJax</span>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>LaTeX</th>
+      <th>Timing (per iteration)</th>
+      <th class="num">LuaMML</th>
+      <th class="num">KaTeX</th>
+      <th class="num">MathJax</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<div id="visual-output" hidden>
+  <h2>Rendered output comparison</h2>
+  <table>
+    <thead><tr><th>LaTeX</th><th>LuaMML (MathML)</th><th>KaTeX</th><th>MathJax</th></tr></thead>
+    <tbody id="vtbody"></tbody>
+  </table>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------------------
+// Test expressions covering the full range of math supported by all three
+// ---------------------------------------------------------------------------
+const tests = [
+  // --- Basic symbols & arithmetic ---
+  { cat: 'Arithmetic', tex: 'a + b - c \\times d \\div e' },
+  { cat: 'Arithmetic', tex: '3.14 \\approx \\frac{22}{7}' },
+
+  // --- Greek letters ---
+  { cat: 'Greek', tex: '\\alpha \\beta \\gamma \\delta \\epsilon \\zeta \\eta \\theta' },
+  { cat: 'Greek', tex: '\\Gamma \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Omega' },
+
+  // --- Superscripts & subscripts ---
+  { cat: 'Scripts', tex: 'x_i^2 + y_{n+1}^{k-1} + z\'^3' },
+  { cat: 'Scripts', tex: 'a_{i_1, i_2, \\ldots, i_n}' },
+
+  // --- Fractions ---
+  { cat: 'Fractions', tex: '\\frac{a}{b} + \\frac{c}{d}' },
+  { cat: 'Fractions', tex: '\\dfrac{1}{1 + \\dfrac{1}{1 + \\dfrac{1}{x}}}' },
+  { cat: 'Fractions', tex: '\\tfrac{1}{2} + \\tfrac{3}{4}' },
+
+  // --- Roots ---
+  { cat: 'Roots', tex: '\\sqrt{x^2 + y^2}' },
+  { cat: 'Roots', tex: '\\sqrt[3]{27} + \\sqrt[n]{a}' },
+
+  // --- Binomials ---
+  { cat: 'Binomials', tex: '\\binom{n}{k} = \\frac{n!}{k!(n-k)!}' },
+
+  // --- Delimiters ---
+  { cat: 'Delimiters', tex: '\\left( \\frac{a}{b} \\right)' },
+  { cat: 'Delimiters', tex: '\\left\\langle x \\middle| y \\right\\rangle' },
+  { cat: 'Delimiters', tex: '\\left\\lfloor \\frac{n}{2} \\right\\rfloor + \\left\\lceil \\frac{n}{2} \\right\\rceil' },
+  { cat: 'Delimiters', tex: '\\left\\{ x \\in \\mathbb{R} : x > 0 \\right\\}' },
+
+  // --- Accents ---
+  { cat: 'Accents', tex: '\\hat{a} \\tilde{b} \\bar{c} \\vec{v} \\dot{x} \\ddot{y}' },
+  { cat: 'Accents', tex: '\\widehat{ABC} + \\widetilde{XYZ}' },
+  { cat: 'Accents', tex: '\\overline{z} + \\underline{w}' },
+  { cat: 'Accents', tex: '\\overbrace{a+b+c}^{n} + \\underbrace{x+y}_{2}' },
+  { cat: 'Accents', tex: '\\overrightarrow{AB} + \\overleftarrow{CD}' },
+
+  // --- Big operators ---
+  { cat: 'Big ops', tex: '\\sum_{i=1}^{n} i^2' },
+  { cat: 'Big ops', tex: '\\prod_{k=1}^{n} k' },
+  { cat: 'Big ops', tex: '\\int_0^\\infty e^{-x} \\, dx' },
+  { cat: 'Big ops', tex: '\\iint_D f(x,y) \\, dA' },
+  { cat: 'Big ops', tex: '\\bigcup_{i=1}^n A_i \\cap \\bigcap_{j=1}^m B_j' },
+  { cat: 'Big ops', tex: '\\bigoplus_{i} V_i \\otimes W_i' },
+
+  // --- Named operators ---
+  { cat: 'Operators', tex: '\\sin^2\\theta + \\cos^2\\theta = 1' },
+  { cat: 'Operators', tex: '\\lim_{n \\to \\infty} \\left(1 + \\frac{1}{n}\\right)^n = e' },
+  { cat: 'Operators', tex: '\\log_2 n \\leq \\ln n \\leq \\log_{10} n' },
+  { cat: 'Operators', tex: '\\det(A) = \\max_{x} f(x) - \\min_{x} g(x)' },
+  { cat: 'Operators', tex: '\\gcd(a, b) = \\inf S' },
+  { cat: 'Operators', tex: '\\limsup_{n} a_n = \\liminf_{n} a_n' },
+
+  // --- Relations ---
+  { cat: 'Relations', tex: 'a \\leq b \\geq c \\neq d' },
+  { cat: 'Relations', tex: 'A \\subset B \\subseteq C \\supset D \\supseteq E' },
+  { cat: 'Relations', tex: 'x \\in S, y \\notin T, z \\ni w' },
+  { cat: 'Relations', tex: 'a \\equiv b \\sim c \\simeq d \\cong e \\approx f' },
+  { cat: 'Relations', tex: 'a \\prec b \\preceq c \\succ d \\succeq e' },
+  { cat: 'Relations', tex: 'p \\parallel q, r \\perp s, t \\mid u' },
+  { cat: 'Relations', tex: 'a \\vdash b \\dashv c \\models d' },
+
+  // --- Arrows ---
+  { cat: 'Arrows', tex: 'a \\to b \\gets c \\leftrightarrow d' },
+  { cat: 'Arrows', tex: 'A \\Rightarrow B \\Leftarrow C \\Leftrightarrow D' },
+  { cat: 'Arrows', tex: 'f \\mapsto f(x), g \\hookrightarrow h' },
+  { cat: 'Arrows', tex: '\\uparrow \\downarrow \\updownarrow \\Uparrow \\Downarrow' },
+  { cat: 'Arrows', tex: '\\nearrow \\searrow \\nwarrow \\swarrow' },
+  { cat: 'Arrows', tex: 'a \\longrightarrow b \\Longleftrightarrow c' },
+  { cat: 'Arrows', tex: 'A \\implies B \\iff C' },
+
+  // --- Binary operators ---
+  { cat: 'Binary ops', tex: 'a \\pm b \\mp c' },
+  { cat: 'Binary ops', tex: 'A \\cap B \\cup C \\setminus D' },
+  { cat: 'Binary ops', tex: 'a \\wedge b \\vee c' },
+  { cat: 'Binary ops', tex: 'a \\oplus b \\otimes c \\odot d' },
+  { cat: 'Binary ops', tex: 'a \\dagger b \\ddagger c \\amalg d' },
+
+  // --- Miscellaneous symbols ---
+  { cat: 'Symbols', tex: '\\infty \\partial \\nabla \\forall \\exists \\nexists' },
+  { cat: 'Symbols', tex: '\\emptyset \\varnothing \\ell \\wp \\Re \\Im \\aleph \\hbar' },
+  { cat: 'Symbols', tex: '\\angle \\triangle \\top \\bot \\neg' },
+  { cat: 'Symbols', tex: '\\clubsuit \\diamondsuit \\heartsuit \\spadesuit' },
+
+  // --- Dots ---
+  { cat: 'Dots', tex: 'a_1, a_2, \\ldots, a_n' },
+  { cat: 'Dots', tex: 'a_1 + a_2 + \\cdots + a_n' },
+
+  // --- Font variants ---
+  { cat: 'Fonts', tex: '\\mathrm{Hom} \\mathbf{v} \\mathit{f} \\mathsf{T} \\mathtt{code}' },
+  { cat: 'Fonts', tex: '\\mathbb{R} \\mathcal{L} \\mathfrak{g} \\mathscr{H}' },
+
+  // --- Text ---
+  { cat: 'Text', tex: 'x = 0 \\text{ if and only if } y = 0' },
+
+  // --- Spacing ---
+  { cat: 'Spacing', tex: 'a\\,b\\;c\\quad d\\qquad e' },
+
+  // --- Matrices ---
+  { cat: 'Matrices', tex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}' },
+  { cat: 'Matrices', tex: '\\begin{bmatrix} 1 & 0 & 0 \\\\ 0 & 1 & 0 \\\\ 0 & 0 & 1 \\end{bmatrix}' },
+  { cat: 'Matrices', tex: '\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad - bc' },
+  { cat: 'Matrices', tex: '\\begin{Vmatrix} x \\\\ y \\end{Vmatrix}' },
+
+  // --- Cases ---
+  { cat: 'Cases', tex: '|x| = \\begin{cases} x & \\text{if } x \\geq 0 \\\\ -x & \\text{if } x < 0 \\end{cases}' },
+
+  // --- Aligned ---
+  { cat: 'Aligned', tex: '\\begin{aligned} a &= b + c \\\\ d &= e + f \\end{aligned}' },
+
+  // --- Array ---
+  { cat: 'Array', tex: '\\begin{array}{lcr} a & b & c \\\\ d & e & f \\end{array}' },
+
+  // --- Over/under ---
+  { cat: 'Over/Under', tex: '\\overset{\\sim}{A} + \\underset{0}{\\lim}' },
+  { cat: 'Over/Under', tex: '\\stackrel{f}{\\longrightarrow}' },
+
+  // --- Negation ---
+  { cat: 'Negation', tex: 'a \\not= b, c \\not\\in D' },
+
+  // --- Color ---
+  { cat: 'Color', tex: '\\color{red}{x} + \\color{blue}{y}' },
+
+  // --- Boxed ---
+  { cat: 'Boxed', tex: '\\boxed{E = mc^2}' },
+
+  // --- Phantom ---
+  { cat: 'Phantom', tex: 'a + \\phantom{b} + c' },
+
+  // --- Styles ---
+  { cat: 'Styles', tex: '\\displaystyle \\sum_i x_i' },
+
+  // --- operatorname ---
+  { cat: 'Operators', tex: '\\operatorname{Tr}(A) + \\operatorname{rank}(B)' },
+
+  // --- Complex real-world expressions ---
+  { cat: 'Real-world', tex: 'e^{i\\pi} + 1 = 0' },
+  { cat: 'Real-world', tex: '\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}' },
+  { cat: 'Real-world', tex: 'f\'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}' },
+  { cat: 'Real-world', tex: '\\nabla \\times \\vec{E} = -\\frac{\\partial \\vec{B}}{\\partial t}' },
+  { cat: 'Real-world', tex: '\\oint_C \\vec{F} \\cdot d\\vec{r} = \\iint_S (\\nabla \\times \\vec{F}) \\cdot d\\vec{S}' },
+  { cat: 'Real-world', tex: '\\sum_{n=0}^{\\infty} \\frac{x^n}{n!} = e^x' },
+  { cat: 'Real-world', tex: '\\hat{H}\\psi = E\\psi' },
+  { cat: 'Real-world', tex: 'ds^2 = -c^2 dt^2 + dx^2 + dy^2 + dz^2' },
+  { cat: 'Real-world', tex: '\\begin{pmatrix} a_{11} & a_{12} \\\\ a_{21} & a_{22} \\end{pmatrix} \\begin{pmatrix} x_1 \\\\ x_2 \\end{pmatrix} = \\begin{pmatrix} b_1 \\\\ b_2 \\end{pmatrix}' },
+  { cat: 'Real-world', tex: 'P(A|B) = \\frac{P(B|A) P(A)}{P(B)}' },
+  { cat: 'Real-world', tex: '\\frac{\\partial^2 u}{\\partial t^2} = c^2 \\nabla^2 u' },
+  { cat: 'Real-world', tex: '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}' },
+];
+
+// ---------------------------------------------------------------------------
+// Library wrappers
+// ---------------------------------------------------------------------------
+let luamml;
+
+async function loadLuaMML() {
+  luamml = await import('../dist/latex.js');
+}
+
+function renderLuaMML(tex) {
+  return luamml.renderToString(tex);
+}
+
+function renderKaTeX(tex) {
+  return katex.renderToString(tex, { throwOnError: false, output: 'mathml' });
+}
+
+function renderMathJax(tex) {
+  const node = MathJax.tex2svg(tex, { display: false });
+  return node.innerHTML;
+}
+
+// ---------------------------------------------------------------------------
+// Benchmark helpers
+// ---------------------------------------------------------------------------
+function bench(fn, iters) {
+  // Warm-up
+  for (let i = 0; i < 3; i++) fn();
+  const t0 = performance.now();
+  for (let i = 0; i < iters; i++) fn();
+  return (performance.now() - t0) / iters;
+}
+
+function fmtMs(ms) {
+  if (ms < 0.01) return '<0.01 ms';
+  return ms.toFixed(2) + ' ms';
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const status = $('status');
+const tbody = $('tbody');
+const vtbody = $('vtbody');
+
+function setStatus(msg) { status.innerHTML = msg; }
+
+async function waitForLibs() {
+  setStatus('Loading libraries\u2026');
+  await loadLuaMML();
+  // Wait for KaTeX
+  while (typeof katex === 'undefined') await new Promise(r => setTimeout(r, 100));
+  // Wait for MathJax
+  while (!window.MathJax?.tex2svg) await new Promise(r => setTimeout(r, 100));
+  setStatus('All libraries loaded.');
+}
+
+async function runBenchmark() {
+  const iters = parseInt($('iters').value, 10) || 50;
+  $('run').disabled = true;
+  $('run-visual').disabled = true;
+  await waitForLibs();
+
+  tbody.innerHTML = '';
+  $('summary').hidden = false;
+  $('legend').hidden = false;
+
+  setStatus(`Running benchmark (${iters} iterations per expression)\u2026`);
+  await new Promise(r => setTimeout(r, 50)); // let UI update
+
+  let totalA = 0, totalB = 0, totalC = 0;
+  const rows = [];
+
+  for (const t of tests) {
+    let tA, tB, tC;
+    let errA = false, errB = false, errC = false;
+
+    try { tA = bench(() => renderLuaMML(t.tex), iters); } catch { tA = NaN; errA = true; }
+    try { tB = bench(() => renderKaTeX(t.tex), iters); } catch { tB = NaN; errB = true; }
+    try { tC = bench(() => renderMathJax(t.tex), iters); } catch { tC = NaN; errC = true; }
+
+    if (!errA) totalA += tA;
+    if (!errB) totalB += tB;
+    if (!errC) totalC += tC;
+
+    rows.push({ cat: t.cat, tex: t.tex, tA, tB, tC, errA, errB, errC });
+  }
+
+  // Find max for bar scaling
+  const maxT = Math.max(...rows.map(r => Math.max(r.tA || 0, r.tB || 0, r.tC || 0)));
+  const barMax = 200; // px
+
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    const scale = (v) => Math.max(2, (v / maxT) * barMax);
+    tr.innerHTML = `
+      <td><span class="cat">${r.cat}</span></td>
+      <td class="latex">${escHtml(r.tex)}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar a" style="width:${scale(r.tA || 0)}px" title="LuaMML: ${fmtMs(r.tA)}"></div>
+          <div class="bar b" style="width:${scale(r.tB || 0)}px" title="KaTeX: ${fmtMs(r.tB)}"></div>
+          <div class="bar c" style="width:${scale(r.tC || 0)}px" title="MathJax: ${fmtMs(r.tC)}"></div>
+        </div>
+      </td>
+      <td class="num">${r.errA ? '<em>err</em>' : fmtMs(r.tA)}</td>
+      <td class="num">${r.errB ? '<em>err</em>' : fmtMs(r.tB)}</td>
+      <td class="num">${r.errC ? '<em>err</em>' : fmtMs(r.tC)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  $('sum-luamml').innerHTML = fmtMs(totalA) + ' <small>total</small>';
+  $('sum-katex').innerHTML = fmtMs(totalB) + ' <small>total</small>';
+  $('sum-mathjax').innerHTML = fmtMs(totalC) + ' <small>total</small>';
+
+  setStatus(`Done. ${tests.length} expressions &times; ${iters} iterations each.`);
+  $('run').disabled = false;
+  $('run-visual').disabled = false;
+}
+
+async function showVisual() {
+  $('run').disabled = true;
+  $('run-visual').disabled = true;
+  await waitForLibs();
+
+  vtbody.innerHTML = '';
+  $('visual-output').hidden = false;
+
+  for (const t of tests) {
+    const tr = document.createElement('tr');
+
+    let htmlA, htmlB, htmlC;
+    try { htmlA = renderLuaMML(t.tex); } catch (e) { htmlA = `<em>Error: ${escHtml(String(e))}</em>`; }
+    try { htmlB = renderKaTeX(t.tex); } catch (e) { htmlB = `<em>Error: ${escHtml(String(e))}</em>`; }
+    try { htmlC = renderMathJax(t.tex); } catch (e) { htmlC = `<em>Error: ${escHtml(String(e))}</em>`; }
+
+    tr.innerHTML = `
+      <td class="latex">${escHtml(t.tex)}</td>
+      <td class="render-cell">${htmlA}</td>
+      <td class="render-cell">${htmlB}</td>
+      <td class="render-cell">${htmlC}</td>
+    `;
+    vtbody.appendChild(tr);
+  }
+
+  setStatus('Visual comparison rendered.');
+  $('run').disabled = false;
+  $('run-visual').disabled = false;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+$('run').addEventListener('click', runBenchmark);
+$('run-visual').addEventListener('click', showVisual);
+</script>
+</body>
+</html>
