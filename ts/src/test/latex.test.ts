@@ -477,4 +477,600 @@ describe('LaTeX parser', () => {
       assert.throws(() => render('\\left( x'), ParseError);
     });
   });
+
+  // =========================================================================
+  // New feature coverage tests
+  // =========================================================================
+
+  describe('AMS symbols', () => {
+    it('parses AMS misc symbols', () => {
+      const cases: [string, string][] = [
+        ['\\eth', '\u00F0'], ['\\mho', '\u2127'], ['\\Finv', '\u2132'],
+        ['\\Game', '\u2141'], ['\\digamma', '\u03DD'], ['\\varkappa', '\u03F0'],
+        ['\\hslash', '\u210F'], ['\\circledS', '\u24C8'], ['\\circledR', '\u00AE'],
+        ['\\lozenge', '\u25CA'], ['\\blacklozenge', '\u29EB'],
+        ['\\blacktriangle', '\u25B4'], ['\\blacktriangledown', '\u25BE'],
+        ['\\blacksquare', '\u25A0'], ['\\square', '\u25A1'],
+        ['\\bigstar', '\u2605'], ['\\sphericalangle', '\u2222'],
+        ['\\measuredangle', '\u2221'], ['\\diagup', '\u2571'],
+        ['\\diagdown', '\u2572'], ['\\maltese', '\u2720'],
+      ];
+      for (const [cmd, expected] of cases) {
+        const el = renderSingle(cmd);
+        assert.deepEqual(el.children, [expected], `${cmd} should produce ${expected}`);
+      }
+    });
+
+    it('parses AMS binary operators', () => {
+      const cases: [string, string][] = [
+        ['\\boxplus', '\u229E'], ['\\boxminus', '\u229F'],
+        ['\\boxtimes', '\u22A0'], ['\\boxdot', '\u22A1'],
+        ['\\intercal', '\u22BA'], ['\\veebar', '\u22BB'],
+        ['\\barwedge', '\u22BC'], ['\\doublebarwedge', '\u2A5E'],
+        ['\\curlywedge', '\u22CF'], ['\\curlyvee', '\u22CE'],
+        ['\\ltimes', '\u22C9'], ['\\rtimes', '\u22CA'],
+        ['\\leftthreetimes', '\u22CB'], ['\\rightthreetimes', '\u22CC'],
+        ['\\circleddash', '\u229D'], ['\\circledast', '\u229B'],
+        ['\\circledcirc', '\u229A'], ['\\divideontimes', '\u22C7'],
+        ['\\dotplus', '\u2214'], ['\\Cap', '\u22D2'], ['\\Cup', '\u22D3'],
+      ];
+      for (const [cmd, expected] of cases) {
+        const el = renderSingle(cmd);
+        assert.equal(el.tag, 'mo', `${cmd} should be mo`);
+        assert.deepEqual(el.children, [expected], `${cmd} should produce ${expected}`);
+      }
+    });
+
+    it('parses AMS relations', () => {
+      const cases: [string, string][] = [
+        ['\\lll', '\u22D8'], ['\\ggg', '\u22D9'],
+        ['\\lessgtr', '\u2276'], ['\\gtrless', '\u2277'],
+        ['\\vartriangleleft', '\u22B2'], ['\\vartriangleright', '\u22B3'],
+        ['\\trianglelefteq', '\u22B4'], ['\\trianglerighteq', '\u22B5'],
+        ['\\between', '\u226C'], ['\\pitchfork', '\u22D4'],
+        ['\\backepsilon', '\u03F6'], ['\\smallsmile', '\u2323'],
+        ['\\smallfrown', '\u2322'], ['\\Subset', '\u22D0'],
+        ['\\Supset', '\u22D1'], ['\\sqsubset', '\u228F'],
+        ['\\sqsupset', '\u2290'], ['\\bumpeq', '\u224F'],
+        ['\\Bumpeq', '\u224E'], ['\\doteq', '\u2250'],
+        ['\\doteqdot', '\u2251'], ['\\fallingdotseq', '\u2252'],
+        ['\\risingdotseq', '\u2253'], ['\\eqcirc', '\u2256'],
+        ['\\circeq', '\u2257'], ['\\triangleq', '\u225C'],
+        ['\\backsim', '\u223D'], ['\\backsimeq', '\u22CD'],
+        ['\\vDash', '\u22A8'], ['\\Vdash', '\u22A9'], ['\\Vvdash', '\u22AA'],
+      ];
+      for (const [cmd, expected] of cases) {
+        const el = renderSingle(cmd);
+        assert.equal(el.tag, 'mo', `${cmd} should be mo`);
+        assert.deepEqual(el.children, [expected], `${cmd} should produce ${expected}`);
+      }
+    });
+
+    it('parses AMS negated relations', () => {
+      const cases: [string, string][] = [
+        ['\\nleq', '\u2270'], ['\\ngeq', '\u2271'],
+        ['\\nless', '\u226E'], ['\\ngtr', '\u226F'],
+        ['\\nprec', '\u2280'], ['\\nsucc', '\u2281'],
+        ['\\subsetneq', '\u228A'], ['\\supsetneq', '\u228B'],
+        ['\\nsubseteq', '\u2288'], ['\\nsupseteq', '\u2289'],
+        ['\\ntriangleleft', '\u22EA'], ['\\ntriangleright', '\u22EB'],
+        ['\\ntrianglelefteq', '\u22EC'], ['\\ntrianglerighteq', '\u22ED'],
+      ];
+      for (const [cmd, expected] of cases) {
+        const el = renderSingle(cmd);
+        assert.equal(el.tag, 'mo', `${cmd} should be mo`);
+        assert.deepEqual(el.children, [expected], `${cmd} should produce ${expected}`);
+      }
+    });
+
+    it('parses AMS arrows', () => {
+      const cases: [string, string][] = [
+        ['\\twoheadrightarrow', '\u21A0'], ['\\twoheadleftarrow', '\u219E'],
+        ['\\rightarrowtail', '\u21A3'], ['\\leftarrowtail', '\u21A2'],
+        ['\\rightrightarrows', '\u21C9'], ['\\leftleftarrows', '\u21C7'],
+        ['\\rightleftarrows', '\u21C4'], ['\\leftrightarrows', '\u21C6'],
+        ['\\Rsh', '\u21B1'], ['\\Lsh', '\u21B0'],
+        ['\\circlearrowleft', '\u21BA'], ['\\circlearrowright', '\u21BB'],
+        ['\\curvearrowleft', '\u21B6'], ['\\curvearrowright', '\u21B7'],
+        ['\\multimap', '\u22B8'], ['\\upuparrows', '\u21C8'],
+        ['\\downdownarrows', '\u21CA'], ['\\upharpoonright', '\u21BE'],
+        ['\\upharpoonleft', '\u21BF'], ['\\downharpoonright', '\u21C2'],
+        ['\\downharpoonleft', '\u21C3'], ['\\rightleftharpoons', '\u21CC'],
+        ['\\leftrightharpoons', '\u21CB'],
+      ];
+      for (const [cmd, expected] of cases) {
+        const el = renderSingle(cmd);
+        assert.equal(el.tag, 'mo', `${cmd} should be mo`);
+        assert.deepEqual(el.children, [expected], `${cmd} should produce ${expected}`);
+      }
+    });
+  });
+
+  describe('extensible arrows', () => {
+    it('parses \\xrightarrow with required arg', () => {
+      const el = renderSingle('\\xrightarrow{f}');
+      assert.equal(el.tag, 'mover');
+      const arrow = el.children[0] as MathMLElement;
+      assert.equal(arrow.tag, 'mo');
+      assert.deepEqual(arrow.children, ['\u2192']);
+    });
+
+    it('parses \\xrightarrow with optional and required args', () => {
+      const el = renderSingle('\\xrightarrow[g]{f}');
+      assert.equal(el.tag, 'munderover');
+      const arrow = el.children[0] as MathMLElement;
+      assert.equal(arrow.tag, 'mo');
+    });
+
+    it('parses \\xleftarrow', () => {
+      const el = renderSingle('\\xleftarrow{f}');
+      assert.equal(el.tag, 'mover');
+      const arrow = el.children[0] as MathMLElement;
+      assert.deepEqual(arrow.children, ['\u2190']);
+    });
+
+    it('parses all extensible arrow variants', () => {
+      const arrows = [
+        'xrightarrow', 'xleftarrow', 'xlongequal', 'xmapsto',
+        'xleftrightarrow', 'xRightarrow', 'xLeftarrow',
+        'xhookleftarrow', 'xhookrightarrow',
+        'xtwoheadrightarrow', 'xtwoheadleftarrow',
+        'xrightharpoondown', 'xrightharpoonup',
+        'xleftharpoondown', 'xleftharpoonup',
+        'xrightleftharpoons', 'xleftrightharpoons',
+      ];
+      for (const name of arrows) {
+        const el = renderSingle(`\\${name}{x}`);
+        assert.equal(el.tag, 'mover', `\\${name} should produce mover`);
+      }
+    });
+  });
+
+  describe('fraction variants', () => {
+    it('parses \\cfrac', () => {
+      const el = renderSingle('\\cfrac{1}{2}');
+      assert.equal(el.tag, 'mstyle');
+      assert.equal(el.attrs.displaystyle, 'true');
+      const frac = el.children[0] as MathMLElement;
+      assert.equal(frac.tag, 'mfrac');
+    });
+
+    it('parses \\cfrac with optional alignment', () => {
+      const el = renderSingle('\\cfrac[l]{1}{2}');
+      assert.equal(el.tag, 'mstyle');
+    });
+
+    it('parses \\genfrac', () => {
+      const children = renderInner('\\genfrac{(}{)}{0pt}{}{n}{k}');
+      const frac = children.find(c => c.tag === 'mfrac');
+      assert.ok(frac);
+    });
+
+    it('handles \\atopwithdelims as infix', () => {
+      const children = renderInner('{n \\atopwithdelims() k}');
+      const frac = children.find(c => c.tag === 'mfrac');
+      assert.ok(frac, 'should contain mfrac');
+    });
+  });
+
+  describe('modular arithmetic', () => {
+    it('parses \\pmod', () => {
+      const children = renderInner('a \\pmod{p}');
+      const str = renderToString('a \\pmod{p}');
+      assert.ok(str.includes('mod'));
+      assert.ok(str.includes('('));
+      assert.ok(str.includes(')'));
+    });
+
+    it('parses \\bmod', () => {
+      const children = renderInner('a \\bmod b');
+      const mo = children.find(c => c.tag === 'mo' && c.children[0] === 'mod');
+      assert.ok(mo);
+    });
+
+    it('parses \\mod', () => {
+      const str = renderToString('a \\mod{p}');
+      assert.ok(str.includes('mod'));
+    });
+
+    it('parses \\pod', () => {
+      const str = renderToString('a \\pod{p}');
+      assert.ok(str.includes('('));
+      assert.ok(str.includes(')'));
+    });
+  });
+
+  describe('cancel commands', () => {
+    it('parses \\cancel', () => {
+      const el = renderSingle('\\cancel{x}');
+      assert.equal(el.tag, 'menclose');
+      assert.equal(el.attrs.notation, 'updiagonalstrike');
+    });
+
+    it('parses \\bcancel', () => {
+      const el = renderSingle('\\bcancel{x}');
+      assert.equal(el.tag, 'menclose');
+      assert.equal(el.attrs.notation, 'downdiagonalstrike');
+    });
+
+    it('parses \\xcancel', () => {
+      const el = renderSingle('\\xcancel{x}');
+      assert.equal(el.tag, 'menclose');
+      assert.equal(el.attrs.notation, 'updiagonalstrike downdiagonalstrike');
+    });
+  });
+
+  describe('color and box commands', () => {
+    it('parses \\textcolor', () => {
+      const el = renderSingle('\\textcolor{red}{x}');
+      assert.equal(el.tag, 'mstyle');
+      assert.equal(el.attrs.mathcolor, 'red');
+    });
+
+    it('parses \\colorbox', () => {
+      const el = renderSingle('\\colorbox{yellow}{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.mathbackground, 'yellow');
+    });
+
+    it('parses \\fcolorbox', () => {
+      const el = renderSingle('\\fcolorbox{red}{yellow}{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.mathbackground, 'yellow');
+    });
+  });
+
+  describe('layout commands', () => {
+    it('parses \\smash', () => {
+      const el = renderSingle('\\smash{x}');
+      assert.equal(el.tag, 'mpadded');
+    });
+
+    it('parses \\smash[b]', () => {
+      const el = renderSingle('\\smash[b]{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.depth, '0');
+    });
+
+    it('parses \\smash[t]', () => {
+      const el = renderSingle('\\smash[t]{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.height, '0');
+    });
+
+    it('parses \\vphantom', () => {
+      const el = renderSingle('\\vphantom{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.width, '0');
+      const phantom = el.children[0] as MathMLElement;
+      assert.equal(phantom.tag, 'mphantom');
+    });
+
+    it('parses \\hphantom', () => {
+      const el = renderSingle('\\hphantom{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.height, '0');
+      assert.equal(el.attrs.depth, '0');
+    });
+
+    it('parses \\mathclap', () => {
+      const el = renderSingle('\\mathclap{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.width, '0');
+    });
+
+    it('parses \\mathrlap', () => {
+      const el = renderSingle('\\mathrlap{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.width, '0');
+    });
+
+    it('parses \\kern', () => {
+      const children = renderInner('a\\kern1em b');
+      const space = children.find(c => c.tag === 'mspace');
+      assert.ok(space);
+    });
+
+    it('parses \\hspace', () => {
+      const children = renderInner('a\\hspace{1em}b');
+      const space = children.find(c => c.tag === 'mspace');
+      assert.ok(space);
+      assert.equal(space!.attrs.width, '1em');
+    });
+
+    it('parses \\rule', () => {
+      const el = renderSingle('\\rule{1em}{2em}');
+      assert.equal(el.tag, 'mspace');
+      assert.equal(el.attrs.width, '1em');
+      assert.equal(el.attrs.height, '2em');
+    });
+
+    it('parses \\raisebox', () => {
+      const el = renderSingle('\\raisebox{2pt}{x}');
+      assert.equal(el.tag, 'mpadded');
+      assert.equal(el.attrs.voffset, '2pt');
+    });
+  });
+
+  describe('new accents', () => {
+    it('parses \\overparen', () => {
+      const el = renderSingle('\\overparen{AB}');
+      assert.equal(el.tag, 'mover');
+      assert.equal(el.attrs.accent, 'true');
+    });
+
+    it('parses \\underparen', () => {
+      const el = renderSingle('\\underparen{AB}');
+      assert.equal(el.tag, 'munder');
+    });
+
+    it('parses \\overbracket', () => {
+      const el = renderSingle('\\overbracket{AB}');
+      assert.equal(el.tag, 'mover');
+    });
+
+    it('parses \\underbracket', () => {
+      const el = renderSingle('\\underbracket{AB}');
+      assert.equal(el.tag, 'munder');
+    });
+  });
+
+  describe('new environments', () => {
+    it('parses dcases environment', () => {
+      const children = renderInner('\\begin{dcases} x & y \\\\ a & b \\end{dcases}');
+      const mtable = children.find(c => c.tag === 'mtable');
+      assert.ok(mtable);
+    });
+
+    it('parses rcases environment', () => {
+      const children = renderInner('\\begin{rcases} x & y \\\\ a & b \\end{rcases}');
+      const mtable = children.find(c => c.tag === 'mtable');
+      assert.ok(mtable);
+      // rcases should have } on the right
+      const rightBrace = children.find(c => c.tag === 'mo' && c.children[0] === '}');
+      assert.ok(rightBrace);
+    });
+
+    it('parses matrix* environment', () => {
+      const el = renderSingle('\\begin{matrix*} a & b \\\\ c & d \\end{matrix*}');
+      assert.equal(el.tag, 'mtable');
+    });
+
+    it('parses equation environment', () => {
+      const str = renderToString('\\begin{equation} x = 1 \\end{equation}');
+      assert.ok(str.includes('<mi>'));
+    });
+
+    it('parses gather environment', () => {
+      const str = renderToString('\\begin{gather} x \\\\ y \\end{gather}');
+      assert.ok(str.includes('<mtable'));
+    });
+
+    it('parses multline environment', () => {
+      const str = renderToString('\\begin{multline} x \\\\ y \\end{multline}');
+      assert.ok(str.includes('<mtable'));
+    });
+
+    it('parses split environment', () => {
+      const str = renderToString('\\begin{split} a &= b \\\\ c &= d \\end{split}');
+      assert.ok(str.includes('<mtable'));
+    });
+
+    it('parses CD environment', () => {
+      const str = renderToString('\\begin{CD} A \\\\ B \\end{CD}');
+      assert.ok(str.includes('<mtable'));
+    });
+  });
+
+  describe('additional integrals', () => {
+    it('parses \\smallint', () => {
+      const el = renderSingle('\\smallint');
+      assert.equal(el.tag, 'mo');
+      assert.deepEqual(el.children, ['\u222B']);
+    });
+
+    it('parses \\iiiint', () => {
+      const el = renderSingle('\\iiiint');
+      assert.equal(el.tag, 'mo');
+      assert.deepEqual(el.children, ['\u2A0C']);
+    });
+
+    it('parses \\idotsint', () => {
+      const el = renderSingle('\\idotsint');
+      assert.equal(el.tag, 'mo');
+    });
+  });
+
+  describe('miscellaneous commands', () => {
+    it('parses \\sout (strikeout)', () => {
+      const el = renderSingle('\\sout{x}');
+      assert.equal(el.tag, 'menclose');
+      assert.equal(el.attrs.notation, 'horizontalstrike');
+    });
+
+    it('parses \\prescript', () => {
+      const el = renderSingle('\\prescript{a}{b}{X}');
+      assert.equal(el.tag, 'mmultiscripts');
+    });
+
+    it('parses \\mathinner', () => {
+      const el = renderSingle('\\mathinner{x}');
+      assert.equal(el.tag, 'mi');
+    });
+
+    it('parses \\LaTeX', () => {
+      const el = renderSingle('\\LaTeX');
+      assert.equal(el.tag, 'mi');
+      assert.deepEqual(el.children, ['LaTeX']);
+    });
+
+    it('parses \\TeX', () => {
+      const el = renderSingle('\\TeX');
+      assert.equal(el.tag, 'mi');
+      assert.deepEqual(el.children, ['TeX']);
+    });
+
+    it('parses \\href', () => {
+      const children = renderInner('\\href{https://example.com}{x}');
+      assert.ok(children.length >= 1);
+    });
+
+    it('parses \\url', () => {
+      const el = renderSingle('\\url{https://example.com}');
+      assert.equal(el.tag, 'mtext');
+    });
+
+    it('parses \\label (invisible)', () => {
+      const str = renderToString('\\label{eq1}');
+      assert.ok(!str.includes('<merror>'));
+    });
+
+    it('parses \\ref', () => {
+      const el = renderSingle('\\ref{eq1}');
+      assert.equal(el.tag, 'mtext');
+    });
+
+    it('parses \\eqref', () => {
+      const children = renderInner('\\eqref{eq1}');
+      const str = renderToString('\\eqref{eq1}');
+      assert.ok(str.includes('('));
+      assert.ok(str.includes(')'));
+    });
+
+    it('parses \\htmlStyle (passes through body)', () => {
+      const el = renderSingle('\\htmlStyle{color:red}{x}');
+      assert.equal(el.tag, 'mi');
+    });
+
+    it('parses \\char', () => {
+      const el = renderSingle('\\char"41');
+      assert.equal(el.tag, 'mtext');
+      assert.deepEqual(el.children, ['A']);
+    });
+
+    it('parses \\unicode', () => {
+      const el = renderSingle('\\unicode{41}');
+      assert.equal(el.tag, 'mtext');
+      assert.deepEqual(el.children, ['A']);
+    });
+  });
+
+  describe('\\tag command', () => {
+    it('parses \\tag{1}', () => {
+      const str = renderToString('x = 1 \\tag{1}');
+      assert.ok(str.includes('('));
+      assert.ok(str.includes(')'));
+    });
+
+    it('parses \\tag*{1}', () => {
+      const str = renderToString('x = 1 \\tag*{1}');
+      assert.ok(str.includes('('));
+    });
+  });
+
+  describe('comprehensive no-merror verification', () => {
+    it('produces no merror for any supported command', () => {
+      // Exhaustive list of all commands that should NOT produce merror
+      const expressions = [
+        // AMS symbols
+        '\\eth', '\\mho', '\\Finv', '\\Game', '\\digamma', '\\varkappa',
+        '\\hslash', '\\circledS', '\\circledR', '\\lozenge', '\\blacklozenge',
+        '\\blacktriangle', '\\blacktriangledown', '\\blacksquare', '\\square',
+        '\\bigstar', '\\sphericalangle', '\\measuredangle', '\\diagup',
+        '\\diagdown', '\\maltese',
+        // AMS relations
+        '\\lll', '\\ggg', '\\lessgtr', '\\gtrless',
+        '\\trianglelefteq', '\\trianglerighteq',
+        '\\vartriangleleft', '\\vartriangleright',
+        '\\between', '\\pitchfork', '\\backepsilon',
+        '\\smallsmile', '\\smallfrown', '\\smile', '\\frown',
+        '\\Subset', '\\Supset', '\\sqsubset', '\\sqsupset',
+        '\\bumpeq', '\\Bumpeq', '\\doteq', '\\doteqdot',
+        '\\fallingdotseq', '\\risingdotseq', '\\eqcirc', '\\circeq',
+        '\\triangleq', '\\thicksim', '\\thickapprox',
+        '\\backsim', '\\backsimeq',
+        '\\vDash', '\\Vdash', '\\Vvdash',
+        // AMS negated relations
+        '\\nleq', '\\ngeq', '\\nless', '\\ngtr',
+        '\\nprec', '\\nsucc', '\\subsetneq', '\\supsetneq',
+        '\\nsubseteq', '\\nsupseteq',
+        '\\ntriangleleft', '\\ntriangleright',
+        '\\ntrianglelefteq', '\\ntrianglerighteq',
+        // AMS arrows
+        '\\twoheadrightarrow', '\\twoheadleftarrow',
+        '\\rightarrowtail', '\\leftarrowtail',
+        '\\rightrightarrows', '\\leftleftarrows',
+        '\\rightleftarrows', '\\leftrightarrows',
+        '\\Rsh', '\\Lsh', '\\circlearrowleft', '\\circlearrowright',
+        '\\curvearrowleft', '\\curvearrowright',
+        '\\multimap', '\\upuparrows', '\\downdownarrows',
+        '\\upharpoonright', '\\upharpoonleft',
+        '\\downharpoonright', '\\downharpoonleft',
+        '\\rightleftharpoons', '\\leftrightharpoons',
+        // AMS binary operators
+        '\\boxplus', '\\boxminus', '\\boxtimes', '\\boxdot',
+        '\\intercal', '\\veebar', '\\barwedge', '\\doublebarwedge',
+        '\\curlywedge', '\\curlyvee', '\\ltimes', '\\rtimes',
+        '\\leftthreetimes', '\\rightthreetimes',
+        '\\circleddash', '\\circledast', '\\circledcirc',
+        '\\centerdot', '\\divideontimes', '\\dotplus',
+        '\\Cap', '\\Cup', '\\doublecap', '\\doublecup',
+        // Extensible arrows
+        '\\xrightarrow{x}', '\\xleftarrow{x}', '\\xlongequal{x}',
+        '\\xmapsto{x}', '\\xleftrightarrow{x}',
+        '\\xRightarrow{x}', '\\xLeftarrow{x}',
+        '\\xhookleftarrow{x}', '\\xhookrightarrow{x}',
+        '\\xtwoheadrightarrow{x}', '\\xtwoheadleftarrow{x}',
+        '\\xrightharpoondown{x}', '\\xrightharpoonup{x}',
+        '\\xleftharpoondown{x}', '\\xleftharpoonup{x}',
+        '\\xrightleftharpoons{x}', '\\xleftrightharpoons{x}',
+        // Layout
+        '\\smash{x}', '\\smash[b]{x}', '\\smash[t]{x}',
+        '\\vphantom{x}', '\\hphantom{x}',
+        '\\mathclap{x}', '\\mathllap{x}', '\\mathrlap{x}',
+        '\\hspace{1em}',
+        '\\rule{1em}{2em}',
+        '\\raisebox{2pt}{x}',
+        // Fractions
+        '\\cfrac{1}{2}',
+        '\\genfrac{(}{)}{0pt}{}{n}{k}',
+        // Mod
+        '\\pmod{p}', '\\bmod', '\\mod{p}', '\\pod{p}',
+        // Cancel
+        '\\cancel{x}', '\\bcancel{x}', '\\xcancel{x}',
+        // Color
+        '\\textcolor{red}{x}', '\\colorbox{yellow}{x}',
+        '\\fcolorbox{red}{yellow}{x}',
+        // Accents
+        '\\overparen{x}', '\\underparen{x}',
+        '\\overbracket{x}', '\\underbracket{x}',
+        // Integrals
+        '\\smallint', '\\iiiint', '\\idotsint',
+        // Misc
+        '\\sout{x}', '\\prescript{a}{b}{X}',
+        '\\mathinner{x}', '\\LaTeX', '\\TeX', '\\KaTeX',
+        '\\href{url}{x}', '\\url{url}',
+        '\\label{eq1}', '\\ref{eq1}', '\\eqref{eq1}',
+        '\\htmlStyle{a}{x}', '\\htmlClass{a}{x}',
+        '\\htmlId{a}{x}', '\\htmlData{a}{x}',
+        '\\char"41', '\\unicode{41}',
+        // Environments
+        '\\begin{dcases} x & y \\\\ a & b \\end{dcases}',
+        '\\begin{rcases} x & y \\\\ a & b \\end{rcases}',
+        '\\begin{matrix*} a & b \\\\ c & d \\end{matrix*}',
+        '\\begin{equation} x \\end{equation}',
+        '\\begin{gather} x \\\\ y \\end{gather}',
+        '\\begin{multline} x \\\\ y \\end{multline}',
+        '\\begin{split} a &= b \\end{split}',
+      ];
+
+      for (const expr of expressions) {
+        const str = renderToString(expr);
+        assert.ok(
+          !str.includes('<merror>'),
+          `Expression "${expr}" should not produce merror, got: ${str.slice(0, 200)}`
+        );
+      }
+    });
+  });
 });

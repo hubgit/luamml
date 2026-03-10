@@ -136,6 +136,86 @@ export const tests = [
   // --- operatorname ---
   { cat: 'Operators', tex: '\\operatorname{Tr}(A) + \\operatorname{rank}(B)' },
 
+  // --- AMS symbols ---
+  { cat: 'AMS symbols', tex: '\\eth \\mho \\Finv \\Game \\digamma \\varkappa \\hslash' },
+  { cat: 'AMS symbols', tex: '\\circledS \\lozenge \\blacklozenge \\blacktriangle \\blacktriangledown \\blacksquare \\square' },
+  { cat: 'AMS symbols', tex: '\\bigstar \\sphericalangle \\measuredangle \\diagup \\diagdown \\maltese' },
+
+  // --- AMS binary operators ---
+  { cat: 'AMS binary', tex: 'a \\boxplus b \\boxminus c \\boxtimes d \\boxdot e' },
+  { cat: 'AMS binary', tex: 'a \\ltimes b \\rtimes c \\leftthreetimes d \\rightthreetimes e' },
+  { cat: 'AMS binary', tex: 'a \\curlywedge b \\curlyvee c \\veebar d \\barwedge e' },
+  { cat: 'AMS binary', tex: 'a \\circleddash b \\circledast c \\circledcirc d' },
+  { cat: 'AMS binary', tex: 'a \\dotplus b \\divideontimes c \\Cap d \\Cup e' },
+
+  // --- AMS relations ---
+  { cat: 'AMS relations', tex: 'a \\lll b \\ggg c \\lessgtr d \\gtrless e' },
+  { cat: 'AMS relations', tex: 'a \\vartriangleleft b \\vartriangleright c \\trianglelefteq d \\trianglerighteq e' },
+  { cat: 'AMS relations', tex: 'a \\Subset b \\Supset c \\sqsubset d \\sqsupset e' },
+  { cat: 'AMS relations', tex: 'a \\doteq b \\doteqdot c \\fallingdotseq d \\risingdotseq e' },
+  { cat: 'AMS relations', tex: 'a \\backsim b \\backsimeq c \\vDash d \\Vdash e \\Vvdash f' },
+
+  // --- AMS negated relations ---
+  { cat: 'AMS negated', tex: 'a \\nleq b \\ngeq c \\nless d \\ngtr e' },
+  { cat: 'AMS negated', tex: 'a \\nprec b \\nsucc c \\subsetneq d \\supsetneq e' },
+  { cat: 'AMS negated', tex: 'a \\nsubseteq b \\nsupseteq c \\ntriangleleft d \\ntriangleright e' },
+
+  // --- AMS arrows ---
+  { cat: 'AMS arrows', tex: '\\twoheadrightarrow \\twoheadleftarrow \\rightarrowtail \\leftarrowtail' },
+  { cat: 'AMS arrows', tex: '\\rightrightarrows \\leftleftarrows \\rightleftarrows \\leftrightarrows' },
+  { cat: 'AMS arrows', tex: '\\circlearrowleft \\circlearrowright \\curvearrowleft \\curvearrowright' },
+  { cat: 'AMS arrows', tex: '\\upuparrows \\downdownarrows \\upharpoonright \\downharpoonleft' },
+  { cat: 'AMS arrows', tex: '\\rightleftharpoons \\leftrightharpoons \\Rsh \\Lsh \\multimap' },
+
+  // --- Extensible arrows ---
+  { cat: 'Ext arrows', tex: 'A \\xrightarrow{f} B \\xleftarrow{g} C' },
+  { cat: 'Ext arrows', tex: 'A \\xrightarrow[\\text{below}]{\\text{above}} B' },
+  { cat: 'Ext arrows', tex: 'A \\xRightarrow{\\sim} B \\xLeftarrow{\\cong} C' },
+  { cat: 'Ext arrows', tex: 'A \\xmapsto{\\phi} B \\xleftrightarrow{\\sim} C' },
+  { cat: 'Ext arrows', tex: 'A \\xhookrightarrow{i} B \\xhookleftarrow{j} C' },
+
+  // --- Fraction variants ---
+  { cat: 'Fractions+', tex: '\\cfrac{1}{1 + \\cfrac{1}{2 + \\cfrac{1}{3}}}' },
+  { cat: 'Fractions+', tex: '\\genfrac{(}{)}{0pt}{}{n}{k}' },
+
+  // --- Modular arithmetic ---
+  { cat: 'Mod arith', tex: 'a \\equiv b \\pmod{n}' },
+  { cat: 'Mod arith', tex: 'a \\bmod b' },
+  { cat: 'Mod arith', tex: 'a \\mod{n}' },
+
+  // --- Cancel ---
+  { cat: 'Cancel', tex: '\\cancel{x} + \\bcancel{y} + \\xcancel{z}' },
+
+  // --- Layout ---
+  { cat: 'Layout', tex: '\\smash{\\frac{1}{2}} + \\vphantom{\\frac{1}{2}} x' },
+  { cat: 'Layout', tex: '\\hspace{2em} x \\kern1em y' },
+  { cat: 'Layout', tex: '\\rule{1em}{0.5em} \\; \\text{gap} \\; \\rule{2em}{0.5em}' },
+  { cat: 'Layout', tex: '\\mathclap{\\text{clap}} x \\mathrlap{\\text{rlap}}' },
+
+  // --- Color ---
+  { cat: 'Color', tex: '\\textcolor{red}{x^2} + \\textcolor{blue}{y^2}' },
+  { cat: 'Color', tex: '\\colorbox{yellow}{E = mc^2}' },
+  { cat: 'Color', tex: '\\fcolorbox{red}{lightyellow}{\\frac{a}{b}}' },
+
+  // --- New accents ---
+  { cat: 'Accents+', tex: '\\overparen{ABC} + \\underparen{XYZ}' },
+  { cat: 'Accents+', tex: '\\overbracket{1+2+3} + \\underbracket{a+b+c}' },
+
+  // --- New environments ---
+  { cat: 'Environments', tex: '\\begin{dcases} x & \\text{if } x > 0 \\\\ -x & \\text{otherwise} \\end{dcases}' },
+  { cat: 'Environments', tex: '\\begin{rcases} x \\\\ y \\end{rcases} = z' },
+  { cat: 'Environments', tex: '\\begin{matrix*} a & b \\\\ c & d \\end{matrix*}' },
+
+  // --- Integrals ---
+  { cat: 'Integrals', tex: '\\iiiint_D f \\, dV' },
+  { cat: 'Integrals', tex: '\\idotsint_D f' },
+  { cat: 'Integrals', tex: '\\smallint f(x) dx' },
+
+  // --- Misc ---
+  { cat: 'Misc', tex: '\\sout{\\text{deleted}} \\text{ replaced}' },
+  { cat: 'Misc', tex: '\\prescript{14}{6}{C}' },
+  { cat: 'Misc', tex: '\\LaTeX \\text{ and } \\TeX' },
+
   // --- Complex real-world expressions ---
   { cat: 'Real-world', tex: 'e^{i\\pi} + 1 = 0' },
   { cat: 'Real-world', tex: '\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}' },

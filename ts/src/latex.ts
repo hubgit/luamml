@@ -443,12 +443,52 @@ class Parser {
       if (t.type === '}' || t.type === '&' || t.type === 'newline') break;
       if (t.type === 'command' && (t.name === 'right' || t.name === 'end')) break;
 
-      // Infix fraction operators: \over, \atop, \choose, \above
+      // \tag and \tag* — equation tags
+      if (t.type === 'command' && t.name === 'tag') {
+        this.advance();
+        // Check for *
+        const star = this.peek();
+        if (star?.type === 'char' && (star as { type: 'char'; value: string }).value === '*') {
+          this.advance();
+        }
+        const tagContent = this.parseArgSingle();
+        // Append tag as parenthesized label
+        items.push(elem('mrow', [
+          elem('mspace', [], { width: '2em' }),
+          elem('mo', ['('], { fence: 'true' }),
+          tagContent,
+          elem('mo', [')'], { fence: 'true' }),
+        ]));
+        continue;
+      }
+
+      // Infix fraction operators: \over, \atop, \choose, \above, \*withdelims
       if (t.type === 'command' && (t.name === 'over' || t.name === 'atop' ||
-          t.name === 'choose' || t.name === 'above')) {
+          t.name === 'choose' || t.name === 'above' ||
+          t.name === 'overwithdelims' || t.name === 'atopwithdelims' ||
+          t.name === 'abovewithdelims')) {
         this.advance();
         const num = items.length === 1 && typeof items[0] !== 'string'
           ? items[0] : elem('mrow', items);
+
+        // *withdelims variants read two delimiters
+        if (t.name === 'overwithdelims' || t.name === 'atopwithdelims' ||
+            t.name === 'abovewithdelims') {
+          const leftDelim = this.readDelimiter();
+          const rightDelim = this.readDelimiter();
+          const denom = this.parseExpression();
+          const attrs: Record<string, string | number | boolean | undefined> = {};
+          if (t.name === 'atopwithdelims' || t.name === 'abovewithdelims') {
+            attrs.linethickness = '0';
+          }
+          const frac = elem('mfrac', [num, denom], attrs);
+          const result: (string | MathMLElement)[] = [];
+          if (leftDelim) result.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+          result.push(frac);
+          if (rightDelim) result.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+          return result.length === 1 ? frac : elem('mrow', result);
+        }
+
         const denom = this.parseExpression();
         if (t.name === 'atop' || t.name === 'above') {
           return elem('mfrac', [num, denom], { linethickness: '0' });
@@ -694,6 +734,94 @@ class Parser {
       return this.parseMatrixCommand(name);
     if (name === 'mbox' || name === 'hbox')
       return this.parseMbox();
+
+    // --- Extensible arrows ---
+
+    if (name === 'xrightarrow' || name === 'xleftarrow' ||
+        name === 'xlongequal' || name === 'xmapsto' ||
+        name === 'xleftrightarrow' || name === 'xRightarrow' ||
+        name === 'xLeftarrow' || name === 'xLeftrightarrow' ||
+        name === 'xhookleftarrow' || name === 'xhookrightarrow' ||
+        name === 'xtwoheadrightarrow' || name === 'xtwoheadleftarrow' ||
+        name === 'xrightharpoondown' || name === 'xrightharpoonup' ||
+        name === 'xleftharpoondown' || name === 'xleftharpoonup' ||
+        name === 'xrightleftharpoons' || name === 'xleftrightharpoons')
+      return this.parseExtensibleArrow(name);
+
+    // --- Fraction variants ---
+
+    if (name === 'cfrac')
+      return this.parseCfrac();
+    if (name === 'genfrac')
+      return this.parseGenfrac();
+    // --- Modular arithmetic ---
+
+    if (name === 'pmod')
+      return this.parsePmod();
+    if (name === 'pod')
+      return this.parsePod();
+    if (name === 'mod')
+      return this.parseMod();
+    if (name === 'bmod')
+      return elem('mo', ['mod']);
+
+    // --- Cancel ---
+
+    if (name === 'cancel' || name === 'bcancel' || name === 'xcancel')
+      return this.parseCancel(name);
+
+    // --- Color/box commands ---
+
+    if (name === 'textcolor')
+      return this.parseTextcolor();
+    if (name === 'colorbox')
+      return this.parseColorbox();
+    if (name === 'fcolorbox')
+      return this.parseFcolorbox();
+
+    // --- Layout commands ---
+
+    if (name === 'smash')
+      return this.parseSmash();
+    if (name === 'vphantom')
+      return this.parseVphantom();
+    if (name === 'hphantom')
+      return this.parseHphantom();
+    if (name === 'mathclap' || name === 'mathllap' || name === 'mathrlap')
+      return this.parseMathLap(name);
+    if (name === 'kern' || name === 'mkern')
+      return this.parseKern(name);
+    if (name === 'hspace')
+      return this.parseHspace();
+    if (name === 'rule')
+      return this.parseRule();
+    if (name === 'raisebox')
+      return this.parseRaisebox();
+
+    // --- Miscellaneous ---
+
+    if (name === 'sideset')
+      return this.parseSideset();
+    if (name === 'prescript')
+      return this.parsePrescript();
+    if (name === 'mathinner')
+      return this.parseMathinner();
+    if (name === 'sout')
+      return this.parseSout();
+    if (name === 'href')
+      return this.parseHref();
+    if (name === 'url')
+      return this.parseUrl();
+    if (name === 'char')
+      return this.parseChar();
+    if (name === 'unicode')
+      return this.parseUnicode();
+    if (name === 'label')
+      return this.parseLabel();
+    if (name === 'ref' || name === 'eqref')
+      return this.parseRef(name);
+    if (name === 'htmlStyle' || name === 'htmlClass' || name === 'htmlId' || name === 'htmlData')
+      return this.parseHtmlAttr(name);
 
     // --- Text/font commands ---
 
@@ -1055,8 +1183,11 @@ class Parser {
     if (envName in matrixEnvs) {
       return this.parseMatrix(envName, matrixEnvs[envName]);
     }
-    if (envName === 'cases') {
+    if (envName === 'cases' || envName === 'dcases') {
       return this.parseCases();
+    }
+    if (envName === 'rcases') {
+      return this.parseRcases();
     }
     if (envName === 'aligned' || envName === 'align' || envName === 'align*') {
       return this.parseAligned(envName);
@@ -1066,6 +1197,39 @@ class Parser {
     }
     if (envName === 'array') {
       return this.parseArray(envName);
+    }
+    // matrix* environment (same as matrix, but with optional alignment)
+    if (envName === 'matrix*') {
+      // Skip optional [alignment] argument
+      this.skipSpaces();
+      const maybeOpt = this.peek();
+      if (maybeOpt?.type === 'char' &&
+          (maybeOpt as { type: 'char'; value: string }).value === '[') {
+        this.advance();
+        while (true) {
+          const p = this.peek();
+          if (!p) break;
+          this.advance();
+          if (p.type === 'char' && (p as { type: 'char'; value: string }).value === ']') break;
+        }
+      }
+      return this.parseMatrix(envName, ['', '']);
+    }
+    // Display equation environments
+    if (envName === 'equation' || envName === 'equation*') {
+      return this.parseEquationEnv(envName);
+    }
+    if (envName === 'gather' || envName === 'gather*') {
+      return this.parseGathered(envName);
+    }
+    if (envName === 'multline' || envName === 'multline*') {
+      return this.parseGathered(envName);
+    }
+    if (envName === 'split') {
+      return this.parseAligned(envName);
+    }
+    if (envName === 'CD') {
+      return this.parseCDEnv(envName);
     }
 
     // Unknown environment: render as error
@@ -1330,6 +1494,574 @@ class Parser {
         }
       }
     }
+  }
+
+  /** Parse an extensible arrow command: \xrightarrow[below]{above}. */
+  private parseExtensibleArrow(name: string): MathMLElement {
+    const arrowChars: Record<string, string> = {
+      xrightarrow: '\u2192',
+      xleftarrow: '\u2190',
+      xlongequal: '=',
+      xmapsto: '\u21A6',
+      xleftrightarrow: '\u2194',
+      xRightarrow: '\u21D2',
+      xLeftarrow: '\u21D0',
+      xLeftrightarrow: '\u21D4',
+      xhookleftarrow: '\u21A9',
+      xhookrightarrow: '\u21AA',
+      xtwoheadrightarrow: '\u21A0',
+      xtwoheadleftarrow: '\u219E',
+      xrightharpoondown: '\u21C1',
+      xrightharpoonup: '\u21C0',
+      xleftharpoondown: '\u21BD',
+      xleftharpoonup: '\u21BC',
+      xrightleftharpoons: '\u21CC',
+      xleftrightharpoons: '\u21CB',
+    };
+
+    const arrow = elem('mo', [arrowChars[name] || '\u2192'], { stretchy: 'true' });
+
+    // Check for optional [below] argument
+    this.skipSpaces();
+    let below: MathMLElement | null = null;
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '[') {
+      this.advance();
+      const items: (string | MathMLElement)[] = [];
+      while (true) {
+        this.skipSpaces();
+        const p = this.peek();
+        if (!p) throw new ParseError('Missing ] in extensible arrow');
+        if (p.type === 'char' && (p as { type: 'char'; value: string }).value === ']') {
+          this.advance();
+          break;
+        }
+        const item = this.parseItem();
+        if (item) items.push(item);
+      }
+      below = items.length === 1 && typeof items[0] !== 'string'
+        ? items[0] : elem('mrow', items);
+    }
+
+    // Required {above} argument
+    const above = this.parseArgSingle();
+
+    if (below) {
+      return elem('munderover', [arrow, below, above]);
+    }
+    return elem('mover', [arrow, above]);
+  }
+
+  /** Parse \cfrac[l|r]{num}{denom}. */
+  private parseCfrac(): MathMLElement {
+    this.skipSpaces();
+    // Optional [l] or [r] alignment
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '[') {
+      this.advance();
+      // Read alignment character
+      while (true) {
+        const p = this.peek();
+        if (!p) break;
+        this.advance();
+        if (p.type === 'char' && (p as { type: 'char'; value: string }).value === ']') break;
+      }
+    }
+    const num = this.parseArgSingle();
+    const denom = this.parseArgSingle();
+    const frac = elem('mfrac', [num, denom]);
+    return elem('mstyle', [frac], { displaystyle: 'true', scriptlevel: '0' });
+  }
+
+  /** Parse \genfrac{left}{right}{thickness}{style}{num}{denom}. */
+  private parseGenfrac(): MathMLElement {
+    // Read 6 required braced arguments
+    const readBracedText = (): string => {
+      this.expect('{');
+      let text = '';
+      while (true) {
+        const t = this.peek();
+        if (!t || t.type === '}') break;
+        this.advance();
+        if (t.type === 'char') text += (t as { type: 'char'; value: string }).value;
+        else if (t.type === 'command') text += (t as { type: 'command'; name: string }).name;
+      }
+      this.expect('}');
+      return text;
+    };
+    const leftDelim = readBracedText();
+    const rightDelim = readBracedText();
+    const thickness = readBracedText();
+    const _style = readBracedText();
+    const num = this.parseArgSingle();
+    const denom = this.parseArgSingle();
+
+    const attrs: Record<string, string | number | boolean | undefined> = {};
+    if (thickness !== '') attrs.linethickness = thickness;
+
+    const frac = elem('mfrac', [num, denom], attrs);
+
+    if (leftDelim || rightDelim) {
+      const items: (string | MathMLElement)[] = [];
+      if (leftDelim) items.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+      items.push(frac);
+      if (rightDelim) items.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+      return elem('mrow', items);
+    }
+    return frac;
+  }
+
+  /** Parse \pmod{...}. */
+  private parsePmod(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('mrow', [
+      elem('mspace', [], { width: '1em' }),
+      elem('mo', ['('], { fence: 'true' }),
+      elem('mi', ['mod']),
+      elem('mspace', [], { width: '0.333em' }),
+      body,
+      elem('mo', [')'], { fence: 'true' }),
+    ]);
+  }
+
+  /** Parse \pod{...}. */
+  private parsePod(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('mrow', [
+      elem('mspace', [], { width: '1em' }),
+      elem('mo', ['('], { fence: 'true' }),
+      body,
+      elem('mo', [')'], { fence: 'true' }),
+    ]);
+  }
+
+  /** Parse \mod{...}. */
+  private parseMod(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('mrow', [
+      elem('mspace', [], { width: '1em' }),
+      elem('mi', ['mod']),
+      elem('mspace', [], { width: '0.333em' }),
+      body,
+    ]);
+  }
+
+  /** Parse \cancel, \bcancel, \xcancel. */
+  private parseCancel(name: string): MathMLElement {
+    const body = this.parseArgSingle();
+    const notationMap: Record<string, string> = {
+      cancel: 'updiagonalstrike',
+      bcancel: 'downdiagonalstrike',
+      xcancel: 'updiagonalstrike downdiagonalstrike',
+    };
+    return elem('menclose', [body], { notation: notationMap[name] });
+  }
+
+  /** Parse \textcolor{color}{body}. */
+  private parseTextcolor(): MathMLElement {
+    this.expect('{');
+    let color = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') color += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    const body = this.parseArgSingle();
+    return elem('mstyle', [body], { mathcolor: color });
+  }
+
+  /** Parse \colorbox{color}{body}. */
+  private parseColorbox(): MathMLElement {
+    this.expect('{');
+    let color = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') color += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    const body = this.parseArgSingle();
+    return elem('mpadded', [body], { mathbackground: color });
+  }
+
+  /** Parse \fcolorbox{bordercolor}{bgcolor}{body}. */
+  private parseFcolorbox(): MathMLElement {
+    this.expect('{');
+    let borderColor = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') borderColor += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    this.expect('{');
+    let bgColor = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') bgColor += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    const body = this.parseArgSingle();
+    return elem('mpadded', [body], {
+      mathbackground: bgColor,
+      style: `border: 1px solid ${borderColor}`,
+    });
+  }
+
+  /** Parse \smash[tb]{body}. */
+  private parseSmash(): MathMLElement {
+    this.skipSpaces();
+    let smashType = 'both'; // default: smash both height and depth
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '[') {
+      this.advance();
+      let opt = '';
+      while (true) {
+        const p = this.peek();
+        if (!p) break;
+        if (p.type === 'char' && (p as { type: 'char'; value: string }).value === ']') {
+          this.advance();
+          break;
+        }
+        this.advance();
+        if (p.type === 'char') opt += (p as { type: 'char'; value: string }).value;
+      }
+      smashType = opt;
+    }
+    const body = this.parseArgSingle();
+    const attrs: Record<string, string | number | boolean | undefined> = {};
+    if (smashType === 'b' || smashType === 'both') attrs.depth = '0';
+    if (smashType === 't' || smashType === 'both') attrs.height = '0';
+    return elem('mpadded', [body], attrs);
+  }
+
+  /** Parse \vphantom{body}. */
+  private parseVphantom(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('mpadded', [elem('mphantom', [body])], { width: '0' });
+  }
+
+  /** Parse \hphantom{body}. */
+  private parseHphantom(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('mpadded', [elem('mphantom', [body])], { height: '0', depth: '0' });
+  }
+
+  /** Parse \mathclap, \mathllap, \mathrlap. */
+  private parseMathLap(name: string): MathMLElement {
+    const body = this.parseArgSingle();
+    if (name === 'mathclap') {
+      return elem('mpadded', [body], { width: '0', lspace: '-0.5width' });
+    }
+    if (name === 'mathllap') {
+      return elem('mpadded', [body], { width: '0', lspace: '-1width' });
+    }
+    // mathrlap
+    return elem('mpadded', [body], { width: '0' });
+  }
+
+  /** Parse \kern or \mkern followed by a dimension. */
+  private parseKern(name: string): MathMLElement {
+    this.skipSpaces();
+    let dim = '';
+    while (true) {
+      const t = this.peek();
+      if (!t) break;
+      if (t.type === 'char') {
+        const v = (t as { type: 'char'; value: string }).value;
+        if (/[0-9.\-]/.test(v) || /[a-z]/.test(v)) {
+          dim += v;
+          this.advance();
+          continue;
+        }
+      }
+      break;
+    }
+    // Convert mu units to em for mkern (18mu = 1em)
+    if (name === 'mkern' && dim.endsWith('mu')) {
+      const val = parseFloat(dim);
+      if (!isNaN(val)) {
+        dim = (val / 18).toFixed(3) + 'em';
+      }
+    }
+    return elem('mspace', [], { width: dim || '0pt' });
+  }
+
+  /** Parse \hspace{dimension}. */
+  private parseHspace(): MathMLElement {
+    // Check for optional *
+    this.skipSpaces();
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '*') {
+      this.advance(); // skip *
+    }
+    this.expect('{');
+    let dim = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') dim += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    return elem('mspace', [], { width: dim || '0pt' });
+  }
+
+  /** Parse \rule[lift]{width}{height}. */
+  private parseRule(): MathMLElement {
+    this.skipSpaces();
+    // Optional [lift] argument
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '[') {
+      this.advance();
+      while (true) {
+        const p = this.peek();
+        if (!p) break;
+        this.advance();
+        if (p.type === 'char' && (p as { type: 'char'; value: string }).value === ']') break;
+      }
+    }
+    // Read {width}
+    this.expect('{');
+    let width = '';
+    while (true) {
+      const t2 = this.peek();
+      if (!t2 || t2.type === '}') break;
+      this.advance();
+      if (t2.type === 'char') width += (t2 as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    // Read {height}
+    this.expect('{');
+    let height = '';
+    while (true) {
+      const t2 = this.peek();
+      if (!t2 || t2.type === '}') break;
+      this.advance();
+      if (t2.type === 'char') height += (t2 as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    return elem('mspace', [], { width: width || '0pt', height: height || '0pt' });
+  }
+
+  /** Parse \raisebox{lift}{body}. */
+  private parseRaisebox(): MathMLElement {
+    this.expect('{');
+    let lift = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') lift += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    const body = this.parseArgSingle();
+    return elem('mpadded', [body], { voffset: lift });
+  }
+
+  /** Parse \sideset{left}{right}{base}. */
+  private parseSideset(): MathMLElement {
+    const left = this.parseArgSingle();
+    const right = this.parseArgSingle();
+    const base = this.parseArgSingle();
+    // Approximate sideset: place left scripts, base, right scripts
+    return elem('mrow', [
+      elem('mrow', [left]),
+      base,
+      elem('mrow', [right]),
+    ]);
+  }
+
+  /** Parse \prescript{sup}{sub}{base}. */
+  private parsePrescript(): MathMLElement {
+    const presup = this.parseArgSingle();
+    const presub = this.parseArgSingle();
+    const base = this.parseArgSingle();
+    return elem('mmultiscripts', [
+      base,
+      elem('mprescripts'),
+      presub,
+      presup,
+    ]);
+  }
+
+  /** Parse \mathinner{body}. */
+  private parseMathinner(): MathMLElement {
+    return this.parseArgSingle();
+  }
+
+  /** Parse \sout{body} — strikeout. */
+  private parseSout(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('menclose', [body], { notation: 'horizontalstrike' });
+  }
+
+  /** Parse \href{url}{body}. */
+  private parseHref(): MathMLElement {
+    this.expect('{');
+    let url = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') url += (t as { type: 'char'; value: string }).value;
+      else if (t.type === 'command') url += '\\' + (t as { type: 'command'; name: string }).name;
+    }
+    this.expect('}');
+    const body = this.parseArgSingle();
+    return elem('mrow', [body], { href: url });
+  }
+
+  /** Parse \url{...}. */
+  private parseUrl(): MathMLElement {
+    this.expect('{');
+    let url = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') url += (t as { type: 'char'; value: string }).value;
+      else if (t.type === 'command') url += '\\' + (t as { type: 'command'; name: string }).name;
+    }
+    this.expect('}');
+    return elem('mtext', [url], { href: url });
+  }
+
+  /** Parse \char"XXXX or \charNN. */
+  private parseChar(): MathMLElement {
+    this.skipSpaces();
+    let code = '';
+    let isHex = false;
+    const t = this.peek();
+    if (t?.type === 'char' && (t as { type: 'char'; value: string }).value === '"') {
+      this.advance();
+      isHex = true;
+    }
+    while (true) {
+      const p = this.peek();
+      if (!p || p.type !== 'char') break;
+      const v = (p as { type: 'char'; value: string }).value;
+      if (isHex ? /[0-9a-fA-F]/.test(v) : /[0-9]/.test(v)) {
+        code += v;
+        this.advance();
+      } else break;
+    }
+    const codePoint = isHex ? parseInt(code, 16) : parseInt(code, 10);
+    if (!isNaN(codePoint)) {
+      return elem('mtext', [String.fromCodePoint(codePoint)]);
+    }
+    return elem('merror', [elem('mtext', ['\\char'])]);
+  }
+
+  /** Parse \unicode{XXXX}. */
+  private parseUnicode(): MathMLElement {
+    this.expect('{');
+    let code = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') code += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    const codePoint = code.startsWith('x') || code.startsWith('X')
+      ? parseInt(code.slice(1), 16) : parseInt(code, 16);
+    if (!isNaN(codePoint)) {
+      return elem('mtext', [String.fromCodePoint(codePoint)]);
+    }
+    return elem('merror', [elem('mtext', ['\\unicode'])]);
+  }
+
+  /** Parse \label{...} — renders as nothing (used for cross-references). */
+  private parseLabel(): MathMLElement {
+    this.expect('{');
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+    }
+    this.expect('}');
+    return elem('mrow'); // invisible
+  }
+
+  /** Parse \ref{...} or \eqref{...}. */
+  private parseRef(name: string): MathMLElement {
+    this.expect('{');
+    let label = '';
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+      if (t.type === 'char') label += (t as { type: 'char'; value: string }).value;
+    }
+    this.expect('}');
+    if (name === 'eqref') {
+      return elem('mrow', [
+        elem('mo', ['(']),
+        elem('mtext', [label]),
+        elem('mo', [')']),
+      ]);
+    }
+    return elem('mtext', [label]);
+  }
+
+  /** Parse \htmlStyle, \htmlClass, \htmlId, \htmlData commands. */
+  private parseHtmlAttr(_name: string): MathMLElement {
+    // Consume the first argument (the HTML attribute value)
+    this.expect('{');
+    while (true) {
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      this.advance();
+    }
+    this.expect('}');
+    // The second argument is the body
+    return this.parseArgSingle();
+  }
+
+  /** Parse rcases environment. */
+  private parseRcases(): MathMLElement {
+    const rows = this.parseTableRows('rcases');
+    const mtable = elem('mtable', rows, { columnalign: 'left left' });
+    return elem('mrow', [
+      mtable,
+      elem('mo', ['}'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+    ]);
+  }
+
+  /** Parse \begin{equation} or \begin{equation*}. */
+  private parseEquationEnv(envName: string): MathMLElement {
+    const body = this.parseExpression();
+    // Consume \end{equation}
+    this.skipSpaces();
+    const t = this.peek();
+    if (t?.type === 'command' && (t as { type: 'command'; name: string }).name === 'end') {
+      this.advance();
+      this.expect('{');
+      let endName = '';
+      while (true) {
+        const et = this.peek();
+        if (!et || et.type === '}') break;
+        this.advance();
+        if (et.type === 'char') endName += (et as { type: 'char'; value: string }).value;
+        if (et.type === 'command') endName += (et as { type: 'command'; name: string }).name;
+      }
+      this.expect('}');
+    }
+    return body;
+  }
+
+  /** Parse \begin{CD} commutative diagram environment. */
+  private parseCDEnv(envName: string): MathMLElement {
+    // Simple table-based rendering of commutative diagrams
+    const rows = this.parseTableRows(envName);
+    return elem('mtable', rows, { columnalign: 'center' });
   }
 
   /** Parse table rows until \end{envName}. */
