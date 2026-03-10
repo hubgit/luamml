@@ -24,3 +24,4 @@ export type {
   ParsedGroup,
   ParsedMathBlock,
 } from './types.js';
+export type { WorkerRequest, WorkerResponse, WorkerResponseOk, WorkerResponseErr } from './worker.js';
