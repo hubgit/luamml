@@ -2,20 +2,28 @@
   "name": "luamml",
   "version": "0.8.0",
   "description": "TypeScript port of LuaMML - LaTeX math to MathML conversion",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "pdfmml": "dist/pdfmml.js"
   },
   "scripts": {
-    "build": "tsc",
+    "generate-parsers": "node scripts/generate-parsers.mjs",
+    "build": "npm run generate-parsers && tsc",
     "test": "node --test dist/test/*.js",
-    "pretest": "tsc"
+    "pretest": "npm run build"
   },
-  "keywords": ["mathml", "latex", "math", "conversion"],
+  "keywords": [
+    "mathml",
+    "latex",
+    "math",
+    "conversion"
+  ],
   "license": "LPPL-1.3c",
   "devDependencies": {
     "@types/node": "^25.4.0",
+    "peggy": "^5.1.0",
     "typescript": "^5.9.3"
   }
 }
