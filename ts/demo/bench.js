@@ -32,7 +32,7 @@ async function tryImport(name, importFn) {
   try {
     return await importFn();
   } catch {
-    if (!jsonOutput) console.error(`⚠  Could not load ${name} — skipping. Install with: npm install --no-save ${name}`);
+    if (!jsonOutput) console.error(`Warning: Could not load ${name} -- skipping. Install with: npm install --no-save ${name}`);
     return null;
   }
 }
@@ -45,13 +45,17 @@ const mathjaxMod = await tryImport('mathjax-full', async () => {
   const { liteAdaptor } = await import('mathjax-full/js/adaptors/liteAdaptor.js');
   const { RegisterHTMLHandler } = await import('mathjax-full/js/handlers/html.js');
   const { AllPackages } = await import('mathjax-full/js/input/tex/AllPackages.js');
+  const { SerializedMmlVisitor } = await import('mathjax-full/js/core/MmlTree/SerializedMmlVisitor.js');
+  const { HTMLMathItem } = await import('mathjax-full/js/handlers/html/HTMLMathItem.js');
   const adaptor = liteAdaptor();
   RegisterHTMLHandler(adaptor);
   const tex = new TeX({ packages: AllPackages });
   const svg = new SVG({ fontCache: 'none' });
   const { mathjax: mj } = await import('mathjax-full/js/mathjax.js');
   const html = mj.document('', { InputJax: tex, OutputJax: svg });
-  return { adaptor, html };
+  const visitor = new SerializedMmlVisitor();
+  const inputJax = html.inputJax[0];
+  return { adaptor, html, visitor, inputJax, HTMLMathItem };
 });
 
 // ---------------------------------------------------------------------------
@@ -65,9 +69,17 @@ function renderKaTeX(tex) {
   return katexMod.default.renderToString(tex, { throwOnError: false, output: 'mathml' });
 }
 
-function renderMathJax(tex) {
+function renderMathJaxSVG(tex) {
   const node = mathjaxMod.html.convert(tex, { display: false });
   return mathjaxMod.adaptor.outerHTML(node);
+}
+
+function renderMathJaxMML(tex) {
+  const { HTMLMathItem, inputJax, html, visitor } = mathjaxMod;
+  const item = new HTMLMathItem(tex, inputJax, false);
+  item.setMetrics(16, 8, 1000000, 100000, 1);
+  item.compile(html);
+  return visitor.visitTree(item.root);
 }
 
 // ---------------------------------------------------------------------------
@@ -87,12 +99,15 @@ function bench(fn, n) {
 const libs = [];
 libs.push({ name: 'LuaMML', render: renderLuaMML });
 if (katexMod) libs.push({ name: 'KaTeX', render: renderKaTeX });
-if (mathjaxMod) libs.push({ name: 'MathJax', render: renderMathJax });
+if (mathjaxMod) {
+  libs.push({ name: 'MathJax MML', render: renderMathJaxMML });
+  libs.push({ name: 'MathJax SVG', render: renderMathJaxSVG });
+}
 
 if (!jsonOutput) {
-  console.log(`\nBenchmark: ${tests.length} expressions × ${iters} iterations\n`);
+  console.log(`\nBenchmark: ${tests.length} expressions x ${iters} iterations\n`);
   console.log('Libraries: ' + libs.map(l => l.name).join(', '));
-  console.log('─'.repeat(70));
+  console.log('-'.repeat(70));
 }
 
 const results = [];
@@ -134,12 +149,12 @@ if (jsonOutput) {
   const cats = [...new Set(tests.map(t => t.cat))];
 
   // Column widths
-  const colW = 12;
+  const colW = 14;
   const catW = 14;
 
   const header = 'Category'.padEnd(catW) + libs.map(l => l.name.padStart(colW)).join('');
   console.log(header);
-  console.log('─'.repeat(header.length));
+  console.log('-'.repeat(header.length));
 
   for (const cat of cats) {
     const catRows = results.filter(r => r.cat === cat);
@@ -154,11 +169,21 @@ if (jsonOutput) {
     console.log(line);
   }
 
-  console.log('─'.repeat(header.length));
+  console.log('-'.repeat(header.length));
   const totalLine = 'TOTAL'.padEnd(catW) + libs.map(l => {
     return (totals[l.name].toFixed(2) + ' ms').padStart(colW);
   }).join('');
   console.log(totalLine);
+
+  // Speedup ratios
+  if (libs.length > 1) {
+    console.log();
+    const base = totals['LuaMML'];
+    for (const lib of libs) {
+      if (lib.name === 'LuaMML') continue;
+      console.log(`${lib.name} / LuaMML: ${(totals[lib.name] / base).toFixed(1)}x slower`);
+    }
+  }
 
   // Error summary
   const errLibs = libs.filter(l => errors[l.name] > 0);
