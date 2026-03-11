@@ -229,4 +229,21 @@ export const tests = [
   { cat: 'Real-world', tex: 'P(A|B) = \\frac{P(B|A) P(A)}{P(B)}' },
   { cat: 'Real-world', tex: '\\frac{\\partial^2 u}{\\partial t^2} = c^2 \\nabla^2 u' },
   { cat: 'Real-world', tex: '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}' },
+
+  // --- Braket/physics ---
+  { cat: 'Braket', tex: '\\bra{\\psi}' },
+  { cat: 'Braket', tex: '\\ket{\\psi}' },
+  { cat: 'Braket', tex: '\\braket{\\phi|\\psi}' },
+  { cat: 'Braket', tex: '\\Braket{\\phi|\\psi}' },
+  { cat: 'Braket', tex: '\\Set{x | x > 0}' },
+  { cat: 'Physics', tex: '\\abs{x}' },
+  { cat: 'Physics', tex: '\\norm{x}' },
+  { cat: 'Physics', tex: '\\qty{x}' },
+  { cat: 'Physics', tex: '\\dv{f}{x}' },
+  { cat: 'Physics', tex: '\\pdv{f}{x}' },
+
+  // --- Chemistry ---
+  { cat: 'Chemistry', tex: '\\ce{H2O}' },
+  { cat: 'Chemistry', tex: '\\ce{2H2 + O2 -> 2H2O}' },
+  { cat: 'Chemistry', tex: '\\ce{CO2 + H2O}' },
 ];

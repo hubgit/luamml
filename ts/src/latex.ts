@@ -823,6 +823,28 @@ class Parser {
     if (name === 'htmlStyle' || name === 'htmlClass' || name === 'htmlId' || name === 'htmlData')
       return this.parseHtmlAttr(name);
 
+    // --- Braket/physics commands ---
+
+    if (name === 'bra')
+      return this.parseBraket('bra');
+    if (name === 'ket')
+      return this.parseBraket('ket');
+    if (name === 'braket' || name === 'Braket')
+      return this.parseBraket(name);
+    if (name === 'Set')
+      return this.parseSetNotation();
+    if (name === 'abs' || name === 'norm' || name === 'qty')
+      return this.parseDelimiterShortcut(name);
+    if (name === 'dv')
+      return this.parseDerivative('d');
+    if (name === 'pdv')
+      return this.parseDerivative('\u2202');
+
+    // --- Chemistry ---
+
+    if (name === 'ce')
+      return this.parseCe();
+
     // --- Text/font commands ---
 
     if (name === 'text' || name === 'textrm' || name === 'textit' ||
@@ -2124,6 +2146,240 @@ class Parser {
     }
 
     return rows;
+  }
+
+  // --- Braket/physics commands ---
+
+  private parseBraket(variant: string): MathMLElement {
+    const content = this.parseGroup();
+    if (variant === 'bra') {
+      return elem('mrow', [
+        elem('mo', ['\u27E8'], { stretchy: 'true', fence: 'true' }),
+        content,
+        elem('mo', ['|'], { stretchy: 'true', fence: 'true' }),
+      ]);
+    }
+    if (variant === 'ket') {
+      return elem('mrow', [
+        elem('mo', ['|'], { stretchy: 'true', fence: 'true' }),
+        content,
+        elem('mo', ['\u27E9'], { stretchy: 'true', fence: 'true' }),
+      ]);
+    }
+    // braket or Braket: split on | to get phi|psi
+    const children = content.tag === 'mrow' ? content.children : [content];
+    const parts: MathMLElement[][] = [[]];
+    for (const child of children) {
+      if (typeof child !== 'string' && child.tag === 'mo' &&
+          child.children.length === 1 && child.children[0] === '|') {
+        parts.push([]);
+      } else if (typeof child !== 'string' && child.tag === 'mo' &&
+          child.children.length === 1 && child.children[0] === '\u2223') {
+        parts.push([]);
+      } else {
+        parts[parts.length - 1].push(typeof child === 'string' ? elem('mtext', [child]) : child);
+      }
+    }
+    const result: Array<string | MathMLElement> = [
+      elem('mo', ['\u27E8'], { stretchy: 'true', fence: 'true' }),
+    ];
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) {
+        result.push(elem('mo', ['|'], { stretchy: 'true', fence: 'true' }));
+      }
+      if (parts[i].length === 1) {
+        result.push(parts[i][0]);
+      } else if (parts[i].length > 1) {
+        result.push(elem('mrow', parts[i]));
+      }
+    }
+    result.push(elem('mo', ['\u27E9'], { stretchy: 'true', fence: 'true' }));
+    return elem('mrow', result);
+  }
+
+  private parseSetNotation(): MathMLElement {
+    const content = this.parseGroup();
+    const children = content.tag === 'mrow' ? content.children : [content];
+    const parts: MathMLElement[][] = [[]];
+    for (const child of children) {
+      if (typeof child !== 'string' && child.tag === 'mo' &&
+          child.children.length === 1 && (child.children[0] === '|' || child.children[0] === '\u2223')) {
+        parts.push([]);
+      } else {
+        parts[parts.length - 1].push(typeof child === 'string' ? elem('mtext', [child]) : child);
+      }
+    }
+    const result: Array<string | MathMLElement> = [
+      elem('mo', ['{'], { stretchy: 'true', fence: 'true' }),
+    ];
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) {
+        result.push(elem('mo', ['|'], { stretchy: 'true' }));
+      }
+      if (parts[i].length === 1) {
+        result.push(parts[i][0]);
+      } else if (parts[i].length > 1) {
+        result.push(elem('mrow', parts[i]));
+      }
+    }
+    result.push(elem('mo', ['}'], { stretchy: 'true', fence: 'true' }));
+    return elem('mrow', result);
+  }
+
+  private parseDelimiterShortcut(name: string): MathMLElement {
+    const content = this.parseGroup();
+    let left: string, right: string;
+    if (name === 'abs') {
+      left = '|'; right = '|';
+    } else if (name === 'norm') {
+      left = '\u2016'; right = '\u2016';
+    } else {
+      // qty - parentheses
+      left = '('; right = ')';
+    }
+    return elem('mrow', [
+      elem('mo', [left], { stretchy: 'true', fence: 'true' }),
+      content,
+      elem('mo', [right], { stretchy: 'true', fence: 'true' }),
+    ]);
+  }
+
+  private parseDerivative(symbol: string): MathMLElement {
+    const f = this.parseGroup();
+    const x = this.parseGroup();
+    return elem('mfrac', [
+      elem('mrow', [elem('mi', [symbol]), f]),
+      elem('mrow', [elem('mi', [symbol]), x]),
+    ]);
+  }
+
+  // --- Chemistry ---
+
+  private parseCe(): MathMLElement {
+    // Parse the braced argument as raw text
+    this.skipSpaces();
+    const t = this.peek();
+    if (!t || t.type !== '{') {
+      return elem('merror', [elem('mtext', ['\\ce requires braced argument'])]);
+    }
+    this.advance(); // skip {
+
+    // Collect raw tokens until matching }
+    let depth = 1;
+    const parts: Array<string | MathMLElement> = [];
+    let currentText = '';
+
+    const flushText = () => {
+      if (currentText) {
+        parts.push(elem('mtext', [currentText]));
+        currentText = '';
+      }
+    };
+
+    while (this.pos < this.tokens.length && depth > 0) {
+      const tok = this.tokens[this.pos];
+      if (tok.type === '{') {
+        depth++;
+        this.pos++;
+      } else if (tok.type === '}') {
+        depth--;
+        if (depth === 0) { this.pos++; break; }
+        this.pos++;
+      } else if (tok.type === 'char') {
+        const ch = tok.value;
+        if (/[A-Z]/.test(ch)) {
+          // Element symbol start
+          flushText();
+          let symbol = ch;
+          // Look ahead for lowercase letters
+          while (this.pos + 1 < this.tokens.length) {
+            const next = this.tokens[this.pos + 1];
+            if (next.type === 'char' && /[a-z]/.test(next.value)) {
+              symbol += next.value;
+              this.pos++;
+            } else {
+              break;
+            }
+          }
+          parts.push(elem('mi', [symbol], { mathvariant: 'normal' }));
+          this.pos++;
+        } else if (/[0-9]/.test(ch)) {
+          // Subscript number
+          flushText();
+          let num = ch;
+          while (this.pos + 1 < this.tokens.length) {
+            const next = this.tokens[this.pos + 1];
+            if (next.type === 'char' && /[0-9]/.test(next.value)) {
+              num += next.value;
+              this.pos++;
+            } else {
+              break;
+            }
+          }
+          parts.push(elem('mn', [num]));
+          this.pos++;
+        } else if (ch === '+') {
+          flushText();
+          parts.push(elem('mo', ['+']));
+          this.pos++;
+        } else if (ch === '-') {
+          flushText();
+          // Check for arrow ->
+          if (this.pos + 1 < this.tokens.length) {
+            const next = this.tokens[this.pos + 1];
+            if (next.type === 'char' && next.value === '>') {
+              parts.push(elem('mo', ['\u2192']));
+              this.pos += 2;
+              continue;
+            }
+          }
+          parts.push(elem('mo', ['-']));
+          this.pos++;
+        } else if (ch === '=') {
+          flushText();
+          parts.push(elem('mo', ['=']));
+          this.pos++;
+        } else if (ch === '(' || ch === ')' || ch === '[' || ch === ']') {
+          flushText();
+          parts.push(elem('mo', [ch]));
+          this.pos++;
+        } else if (ch === '^') {
+          // Superscript handling
+          flushText();
+          this.pos++;
+        } else if (ch === ' ' || ch === '\u00A0') {
+          this.pos++;
+        } else {
+          currentText += ch;
+          this.pos++;
+        }
+      } else if (tok.type === '_') {
+        // Subscript - the number after should already be handled
+        this.pos++;
+      } else if (tok.type === '^') {
+        this.pos++;
+      } else if (tok.type === 'space') {
+        this.pos++;
+      } else if (tok.type === 'command') {
+        flushText();
+        // Handle some common chem commands
+        if (tok.name === 'rightarrow' || tok.name === 'to') {
+          parts.push(elem('mo', ['\u2192']));
+        } else if (tok.name === 'leftarrow') {
+          parts.push(elem('mo', ['\u2190']));
+        } else if (tok.name === 'leftrightarrow' || tok.name === 'rightleftharpoons') {
+          parts.push(elem('mo', ['\u21CC']));
+        } else {
+          parts.push(elem('mtext', ['\\' + tok.name]));
+        }
+        this.pos++;
+      } else {
+        this.pos++;
+      }
+    }
+    flushText();
+
+    return elem('mrow', parts);
   }
 }
 

@@ -1073,4 +1073,105 @@ describe('LaTeX parser', () => {
       }
     });
   });
+
+  describe('braket/physics commands', () => {
+    it('\\bra produces angle bracket and vert', () => {
+      const els = renderInner('\\bra{\\psi}');
+      assert.ok(els.length >= 3);
+      assert.deepEqual(els[0].children, ['\u27E8']);
+      assert.deepEqual(els[els.length - 1].children, ['|']);
+    });
+
+    it('\\ket produces vert and angle bracket', () => {
+      const els = renderInner('\\ket{\\psi}');
+      assert.ok(els.length >= 3);
+      assert.deepEqual(els[0].children, ['|']);
+      assert.deepEqual(els[els.length - 1].children, ['\u27E9']);
+    });
+
+    it('\\braket splits on |', () => {
+      const str = renderToString('\\braket{\\phi|\\psi}');
+      assert.ok(str.includes('\u27E8'));
+      assert.ok(str.includes('\u27E9'));
+      assert.ok(!str.includes('<merror'));
+    });
+
+    it('\\Braket works like \\braket', () => {
+      const str = renderToString('\\Braket{\\phi|\\psi}');
+      assert.ok(str.includes('\u27E8'));
+      assert.ok(str.includes('\u27E9'));
+      assert.ok(!str.includes('<merror'));
+    });
+
+    it('\\Set produces curly braces with separator', () => {
+      const str = renderToString('\\Set{x | x > 0}');
+      assert.ok(str.includes('{'));
+      assert.ok(str.includes('}'));
+      assert.ok(!str.includes('<merror'));
+    });
+
+    it('\\abs wraps in | delimiters', () => {
+      const els = renderInner('\\abs{x}');
+      assert.ok(els.length >= 3);
+      assert.deepEqual(els[0].children, ['|']);
+      assert.deepEqual(els[els.length - 1].children, ['|']);
+    });
+
+    it('\\norm wraps in double-bar delimiters', () => {
+      const els = renderInner('\\norm{x}');
+      assert.ok(els.length >= 3);
+      assert.deepEqual(els[0].children, ['\u2016']);
+      assert.deepEqual(els[els.length - 1].children, ['\u2016']);
+    });
+
+    it('\\qty wraps in parentheses', () => {
+      const els = renderInner('\\qty{x}');
+      assert.ok(els.length >= 3);
+      assert.deepEqual(els[0].children, ['(']);
+      assert.deepEqual(els[els.length - 1].children, [')']);
+    });
+  });
+
+  describe('derivative commands', () => {
+    it('\\dv produces fraction with d', () => {
+      const el = renderSingle('\\dv{f}{x}');
+      assert.equal(el.tag, 'mfrac');
+      const num = el.children[0] as MathMLElement;
+      const denom = el.children[1] as MathMLElement;
+      assert.equal(num.tag, 'mrow');
+      assert.equal(denom.tag, 'mrow');
+      // Numerator contains d and f
+      const numFirst = num.children[0] as MathMLElement;
+      assert.deepEqual(numFirst.children, ['d']);
+    });
+
+    it('\\pdv produces fraction with partial', () => {
+      const el = renderSingle('\\pdv{f}{x}');
+      assert.equal(el.tag, 'mfrac');
+      const num = el.children[0] as MathMLElement;
+      const numFirst = num.children[0] as MathMLElement;
+      assert.deepEqual(numFirst.children, ['\u2202']);
+    });
+  });
+
+  describe('chemistry (\\ce)', () => {
+    it('\\ce{H2O} produces element symbols and numbers', () => {
+      const str = renderToString('\\ce{H2O}');
+      assert.ok(!str.includes('<merror'));
+      assert.ok(str.includes('>H<'));
+      assert.ok(str.includes('>2<'));
+      assert.ok(str.includes('>O<'));
+    });
+
+    it('\\ce handles reactions with arrows', () => {
+      const str = renderToString('\\ce{2H2 + O2 -> 2H2O}');
+      assert.ok(!str.includes('<merror'));
+      assert.ok(str.includes('\u2192') || str.includes('→'));
+    });
+
+    it('\\ce handles complex formulas', () => {
+      const str = renderToString('\\ce{CO2 + H2O}');
+      assert.ok(!str.includes('<merror'));
+    });
+  });
 });
