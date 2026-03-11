@@ -12,6 +12,18 @@ import {
   bigOperators, delimiters, fontCommands,
 } from './latex-commands.js';
 
+// Symbols that are upright in TeX and need mathvariant="normal" as single-char <mi>.
+// Without this, MathML renders single-char <mi> as italic by default.
+const uprightSymbols = new Set([
+  // Uppercase Greek
+  'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon',
+  'Phi', 'Psi', 'Omega',
+  // Miscellaneous upright symbols
+  'infty', 'emptyset', 'varnothing', 'partial', 'nabla',
+  'Re', 'Im', 'aleph', 'wp', 'mho', 'Finv', 'Game',
+  'clubsuit', 'diamondsuit', 'heartsuit', 'spadesuit',
+]);
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
@@ -514,7 +526,17 @@ class Parser {
       }
 
       const item = this.parseItem();
-      if (item) items.push(item);
+      if (item) {
+        items.push(item);
+        // Insert invisible ApplyFunction after named operators when followed by more content
+        if (item.meta[':applyfunction']) {
+          const next = this.peek();
+          if (next && next.type !== '}' && next.type !== '&' && next.type !== 'newline' &&
+              !(next.type === 'command' && (next.name === 'right' || next.name === 'end'))) {
+            items.push(elem('mo', ['\u2061']));
+          }
+        }
+      }
     }
 
     if (items.length === 0) return elem('mrow');
@@ -568,10 +590,17 @@ class Parser {
       }
     }
 
-    if (sub && sup) return elem('msubsup', [base, sub, sup]);
-    if (sub) return elem('msub', [base, sub]);
-    if (sup) return elem('msup', [base, sup]);
-    return base;
+    // Big operators and named limits use munderover/munder/mover
+    const useLimits = base.meta[':limits'] === true;
+    const applyFn = base.meta[':applyfunction'] === true;
+    let result: MathMLElement;
+    if (sub && sup) result = elem(useLimits ? 'munderover' : 'msubsup', [base, sub, sup]);
+    else if (sub) result = elem(useLimits ? 'munder' : 'msub', [base, sub]);
+    else if (sup) result = elem(useLimits ? 'mover' : 'msup', [base, sup]);
+    else return base;
+    // Propagate ApplyFunction flag so parseExpression inserts ⁡ after \sin^2 etc.
+    if (applyFn) result.meta[':applyfunction'] = true;
+    return result;
   }
 
   /** Collect consecutive prime characters into a single mo. */
@@ -884,15 +913,26 @@ class Parser {
     // --- Named operators ---
 
     if (operatorNames.has(name))
-      return elem('mi', [name]);
+      return elem('mi', [name], {}, { ':applyfunction': true });
 
     if (operatorNamesWithLimits.has(name))
-      return elem('mo', [name], { movablelimits: 'true' });
+      return elem('mo', [name], { movablelimits: 'true' }, { ':limits': true });
 
     // --- Symbol lookup ---
 
     const sym = symbols[name];
-    if (sym) return elem(sym.element, [sym.char]);
+    if (sym) {
+      // Uppercase Greek and specific symbols are upright in TeX.
+      // In MathML, single-char <mi> defaults to italic, so we need mathvariant="normal".
+      if (sym.element === 'mi' && uprightSymbols.has(name)) {
+        return elem(sym.element, [sym.char], { mathvariant: 'normal' });
+      }
+      // Big operators (∑, ∏, ⋃, etc.) use under/over for limits
+      if (bigOperators.has(name)) {
+        return elem(sym.element, [sym.char], {}, { ':limits': true });
+      }
+      return elem(sym.element, [sym.char]);
+    }
 
     // --- Unknown command: produce merror ---
 

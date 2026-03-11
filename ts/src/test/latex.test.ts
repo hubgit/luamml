@@ -188,10 +188,11 @@ describe('LaTeX parser', () => {
       assert.deepEqual(el.children, ['\u03B1']);
     });
 
-    it('parses uppercase Greek', () => {
+    it('parses uppercase Greek with mathvariant=normal', () => {
       const el = renderSingle('\\Omega');
       assert.equal(el.tag, 'mi');
       assert.deepEqual(el.children, ['\u03A9']);
+      assert.equal(el.attrs.mathvariant, 'normal');
     });
   });
 
@@ -216,15 +217,16 @@ describe('LaTeX parser', () => {
   });
 
   describe('big operators', () => {
-    it('parses \\sum with limits', () => {
+    it('parses \\sum with limits using munderover', () => {
       const children = renderInner('\\sum_{i=1}^{n}');
       assert.equal(children.length, 1);
-      // sum with sub and sup
-      assert.equal(children[0].tag, 'msubsup');
+      // sum with sub and sup uses munderover (limits above/below)
+      assert.equal(children[0].tag, 'munderover');
     });
 
     it('parses \\int', () => {
       const children = renderInner('\\int_0^1');
+      // int is not a big operator, uses msubsup
       assert.equal(children[0].tag, 'msubsup');
     });
   });
@@ -234,6 +236,16 @@ describe('LaTeX parser', () => {
       const el = renderSingle('\\sin');
       assert.equal(el.tag, 'mi');
       assert.deepEqual(el.children, ['sin']);
+    });
+
+    it('inserts ApplyFunction after \\sin when followed by content', () => {
+      const children = renderInner('\\sin x');
+      assert.equal(children.length, 3); // mi('sin'), mo('⁡'), mi('x')
+      assert.equal(children[0].tag, 'mi');
+      assert.deepEqual(children[0].children, ['sin']);
+      assert.equal(children[1].tag, 'mo');
+      assert.deepEqual(children[1].children, ['\u2061']);
+      assert.equal(children[2].tag, 'mi');
     });
 
     it('parses \\lim as mo with movablelimits', () => {

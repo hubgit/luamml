@@ -123,14 +123,10 @@ function delimToTable(delim: MathNode | null | undefined): [MathMLElement | null
     const ch = getRemapChar((fam << 21) | char);
     const result = elem('mo', [ch], {
       'tex:family': fam !== 0 ? fam : undefined,
-      stretchy: !stretchySet.has(ch) ? undefined : undefined, // stretchy handled below
+      stretchy: stretchySet.has(ch) ? false : undefined,
       lspace: 0,
       rspace: 0,
     });
-    // Set stretchy only if needed (not default stretchy)
-    if (!stretchySet.has(ch)) {
-      // not in stretchy set, no attribute needed
-    }
     // Store actual and nodes in meta
     result.meta[':nodes'] = [delim];
     result.meta[':actual'] = ch;
