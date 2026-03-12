@@ -786,7 +786,8 @@ class Parser {
         name === 'xtwoheadrightarrow' || name === 'xtwoheadleftarrow' ||
         name === 'xrightharpoondown' || name === 'xrightharpoonup' ||
         name === 'xleftharpoondown' || name === 'xleftharpoonup' ||
-        name === 'xrightleftharpoons' || name === 'xleftrightharpoons')
+        name === 'xrightleftharpoons' || name === 'xleftrightharpoons' ||
+        name === 'xtofrom')
       return this.parseExtensibleArrow(name);
 
     // --- Fraction variants ---
@@ -897,6 +898,42 @@ class Parser {
 
     if (name === 'ce')
       return this.parseCe();
+
+    // --- Math mode delimiters ---
+
+    if (name === '(' || name === ')')
+      return elem('mrow');  // inline math delimiters (no-op in math mode)
+    if (name === '[' || name === ']')
+      return elem('mrow');  // display math delimiters (no-op in math mode)
+
+    // --- Font sizing commands ---
+
+    if (name === 'tiny' || name === 'sixptsize' || name === 'scriptsize' ||
+        name === 'footnotesize' || name === 'small' || name === 'normalsize' ||
+        name === 'large' || name === 'Large' || name === 'LARGE' ||
+        name === 'huge' || name === 'Huge')
+      return this.parseSizingCommand(name);
+
+    // --- Spacing: \hskip, \mskip ---
+
+    if (name === 'hskip' || name === 'mskip')
+      return this.parseKern(name);
+
+    // --- Atom class commands ---
+
+    if (name === 'mathopen' || name === 'mathclose' || name === 'mathpunct' ||
+        name === 'mathord' || name === 'mathbin' || name === 'mathrel')
+      return this.parseAtomClass(name);
+
+    // --- Line break hints ---
+
+    if (name === 'nobreak' || name === 'allowbreak')
+      return elem('mrow');  // no MathML equivalent, silently consume
+
+    // --- \mathchoice ---
+
+    if (name === 'mathchoice')
+      return this.parseMathchoice();
 
     // --- Text/font commands ---
 
@@ -1253,6 +1290,60 @@ class Parser {
     return elem('mstyle', [body], { mathvariant: 'bold' });
   }
 
+  private parseSizingCommand(name: string): MathMLElement {
+    const sizeMap: Record<string, string> = {
+      tiny: '0.5em', sixptsize: '0.5em', scriptsize: '0.7em',
+      footnotesize: '0.8em', small: '0.9em', normalsize: '1em',
+      large: '1.2em', Large: '1.44em', LARGE: '1.728em',
+      huge: '2.074em', Huge: '2.488em',
+    };
+    const size = sizeMap[name] || '1em';
+    // Sizing applies to the rest of the group — parse remaining content
+    const items: MathMLElement[] = [];
+    while (true) {
+      this.skipSpaces();
+      const t = this.peek();
+      if (!t || t.type === '}') break;
+      if (t.type === 'command' && t.name === 'end') break;
+      const item = this.parseItem();
+      if (item) items.push(item);
+    }
+    const body = items.length === 1 ? items[0] : elem('mrow', items);
+    return elem('mstyle', [body], { mathsize: size });
+  }
+
+  private parseAtomClass(name: string): MathMLElement {
+    const body = this.parseArgSingle();
+    // Wrap content in appropriate MathML element to convey operator class
+    const classMap: Record<string, string> = {
+      mathopen: 'open', mathclose: 'close', mathpunct: 'separator',
+      mathord: 'normal', mathbin: 'infix', mathrel: 'infix',
+    };
+    if (body.tag === 'mo') {
+      if (name === 'mathopen') body.attrs.fence = 'true';
+      else if (name === 'mathclose') body.attrs.fence = 'true';
+      return body;
+    }
+    // Wrap non-mo content in mo with appropriate attributes
+    const text = body.children.length === 1 && typeof body.children[0] === 'string'
+      ? body.children[0] : undefined;
+    if (text) {
+      const attrs: Record<string, string> = {};
+      if (name === 'mathopen' || name === 'mathclose') attrs.fence = 'true';
+      return elem('mo', [text], attrs);
+    }
+    return body;
+  }
+
+  private parseMathchoice(): MathMLElement {
+    // \mathchoice{D}{T}{S}{SS} — pick display (first) argument
+    const display = this.parseArgSingle();
+    this.parseArgSingle(); // text — discard
+    this.parseArgSingle(); // script — discard
+    this.parseArgSingle(); // scriptscript — discard
+    return display;
+  }
+
   private parseMathFont(cmd: string): MathMLElement {
     const body = this.parseArgSingle();
     const variant = fontCommands[cmd];
@@ -1317,8 +1408,23 @@ class Parser {
     if (envName === 'rcases') {
       return this.parseRcases();
     }
-    if (envName === 'aligned' || envName === 'align' || envName === 'align*') {
+    if (envName === 'aligned' || envName === 'align' || envName === 'align*' ||
+        envName === 'alignat' || envName === 'alignat*' ||
+        envName === 'alignedat') {
+      // alignat/alignedat take a mandatory {n} argument for column count — skip it
+      if (envName === 'alignat' || envName === 'alignat*' || envName === 'alignedat') {
+        this.expect('{');
+        while (true) {
+          const t = this.peek();
+          if (!t || t.type === '}') break;
+          this.advance();
+        }
+        this.expect('}');
+      }
       return this.parseAligned(envName);
+    }
+    if (envName === 'darray') {
+      return this.parseArray(envName);
     }
     if (envName === 'gathered') {
       return this.parseGathered(envName);
@@ -1645,6 +1751,7 @@ class Parser {
       xleftharpoonup: '\u21BC',
       xrightleftharpoons: '\u21CC',
       xleftrightharpoons: '\u21CB',
+      xtofrom: '\u21C4',
     };
 
     const arrow = elem('mo', [arrowChars[name] || '\u2192'], { stretchy: 'true' });
@@ -1911,8 +2018,16 @@ class Parser {
       }
       break;
     }
-    // Convert mu units to em for mkern (18mu = 1em)
-    if (name === 'mkern' && dim.endsWith('mu')) {
+    // Strip glue (plus/minus components) for hskip/mskip
+    if (name === 'hskip' || name === 'mskip') {
+      const plusIdx = dim.indexOf('plus');
+      if (plusIdx > 0) dim = dim.slice(0, plusIdx);
+      const minusIdx = dim.indexOf('minus');
+      if (minusIdx > 0) dim = dim.slice(0, minusIdx);
+      dim = dim.trim();
+    }
+    // Convert mu units to em for mkern/mskip (18mu = 1em)
+    if ((name === 'mkern' || name === 'mskip') && dim.endsWith('mu')) {
       const val = parseFloat(dim);
       if (!isNaN(val)) {
         dim = (val / 18).toFixed(3) + 'em';
@@ -2209,6 +2324,15 @@ class Parser {
       return this.parseExpression();
     };
 
+    // Skip leading \hline / \hdashline
+    this.skipSpaces();
+    while (true) {
+      const ht = this.peek();
+      if (ht?.type === 'command' && (ht.name === 'hline' || ht.name === 'hdashline')) {
+        this.advance();
+      } else break;
+    }
+
     currentCells.push(parseCell());
 
     while (true) {
@@ -2240,6 +2364,14 @@ class Parser {
         this.advance();
         this.skipOptionalDimension();
         pushRow();
+        // Skip \hline / \hdashline after row break
+        this.skipSpaces();
+        while (true) {
+          const ht2 = this.peek();
+          if (ht2?.type === 'command' && (ht2.name === 'hline' || ht2.name === 'hdashline')) {
+            this.advance();
+          } else break;
+        }
         // Start new row if there's more content
         this.skipSpaces();
         const next = this.peek();

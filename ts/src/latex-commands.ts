@@ -426,6 +426,14 @@ export const accents: Record<string, AccentDef> = {
   underparen: { char: '\u23DD', over: false },
   overbracket: { char: '\u23B4', over: true },
   underbracket: { char: '\u23B5', over: false },
+  widecheck:    { char: '\u02C7', over: true },
+  Overrightarrow: { char: '\u21D2', over: true },
+  overgroup:    { char: '\u23DC', over: true },
+  undergroup:   { char: '\u23DD', over: false },
+  overlinesegment: { char: '\u23E0', over: true },
+  overleftharpoon: { char: '\u21BC', over: true },
+  overrightharpoon: { char: '\u21C0', over: true },
+  utilde:       { char: '\u0303', over: false },
 };
 
 /** Whether an accent should be stretchy. */
@@ -435,6 +443,8 @@ export const wideAccents = new Set([
   'underrightarrow', 'underleftarrow', 'underleftrightarrow',
   'underline', 'underbrace', 'overbrace',
   'overparen', 'underparen', 'overbracket', 'underbracket',
+  'widecheck', 'Overrightarrow', 'overgroup', 'undergroup',
+  'overlinesegment', 'overleftharpoon', 'overrightharpoon', 'utilde',
 ]);
 
 /** Over/under decorations that are not true accents (no accent/accentunder attr). */
@@ -448,6 +458,8 @@ export const operatorNames = new Set([
   'arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth',
   'csc', 'deg', 'dim', 'exp', 'hom', 'ker', 'lg', 'ln', 'log',
   'sec', 'sin', 'sinh', 'tan', 'tanh',
+  // Russian/European operator names
+  'arctg', 'arcctg', 'ch', 'cosec', 'ctg', 'cth', 'sh', 'tg', 'th',
 ]);
 
 /** Named math operators with movable limits (display mode: over/under). */
@@ -522,4 +534,10 @@ export const fontCommands: Record<string, string> = {
   mathcal: 'script',
   mathscr: 'script',
   mathfrak: 'fraktur',
+  // Aliases
+  bold: 'bold',
+  Bbb: 'double-struck',
+  frak: 'fraktur',
+  mathnormal: 'italic',
+  mathsfit: 'sans-serif-italic',
 };
