@@ -360,6 +360,43 @@ function processInlineDefs(input: string, macros: Map<string, MacroDef>): string
   return result;
 }
 
+/**
+ * Ensure command-name/argument boundaries are preserved in expansion strings.
+ * When a command name (\foo) ends with letters and is immediately followed by
+ * a letter (from argument substitution), TeX would keep them as separate tokens.
+ * In string-based expansion they'd merge (\foox → unknown command \foox).
+ * This function inserts a space where needed to maintain the boundary.
+ *
+ * We parse command names properly rather than using regex, because a naive
+ * regex can't distinguish \alpha (one command) from \frac a (command + arg).
+ */
+function ensureCommandBoundaries(str: string): string {
+  let result = '';
+  let i = 0;
+  while (i < str.length) {
+    if (str[i] === '\\' && i + 1 < str.length && /[a-zA-Z]/.test(str[i + 1])) {
+      // Read the command name
+      let j = i + 1;
+      while (j < str.length && /[a-zA-Z]/.test(str[j])) j++;
+      result += str.slice(i, j);
+      i = j;
+      // Skip existing whitespace
+      while (i < str.length && /[ \t\n\r]/.test(str[i])) {
+        result += str[i];
+        i++;
+      }
+      // If next char is a letter and there was no whitespace, add a space
+      if (i < str.length && /[a-zA-Z]/.test(str[i]) && j === i) {
+        result += ' ';
+      }
+    } else {
+      result += str[i];
+      i++;
+    }
+  }
+  return result;
+}
+
 function expandMacros(input: string, macros: Map<string, MacroDef>): string {
   // First, process inline definitions (\def, \let, \newcommand, etc.)
   let result = processInlineDefs(input, macros);
@@ -385,7 +422,12 @@ function expandMacros(input: string, macros: Map<string, MacroDef>): string {
         if (def) {
           expanded = true;
           if (def.args === 0) {
-            out += def.expansion;
+            let expansion = def.expansion;
+            // Ensure command boundaries between expansion and following text
+            if (/[a-zA-Z]$/.test(expansion) && i < result.length && /[a-zA-Z]/.test(result[i])) {
+              expansion += ' ';
+            }
+            out += expansion;
           } else {
             const args: string[] = [];
             for (let a = 0; a < def.args; a++) {
@@ -397,10 +439,22 @@ function expandMacros(input: string, macros: Map<string, MacroDef>): string {
             for (let a = 0; a < args.length; a++) {
               exp = exp.replaceAll(`#${a + 1}`, args[a]);
             }
+            // Ensure command boundaries after argument substitution
+            exp = ensureCommandBoundaries(exp);
+            // Also ensure boundary between expansion end and following text
+            if (/[a-zA-Z]$/.test(exp) && i < result.length && /[a-zA-Z]/.test(result[i])) {
+              exp += ' ';
+            }
             out += exp;
           }
         } else {
           out += '\\' + name;
+          // readCommandName consumed trailing space — restore it if needed
+          // to prevent command from merging with following letter
+          if (/[a-zA-Z]/.test(name[name.length - 1]) &&
+              i < result.length && /[a-zA-Z]/.test(result[i])) {
+            out += ' ';
+          }
         }
       } else {
         out += result[i];
