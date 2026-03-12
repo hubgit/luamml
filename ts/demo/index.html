@@ -12,9 +12,24 @@
 <!-- MathJax -->
 <script>
   window.MathJax = {
-    startup: { typeset: false },
     tex: { inlineMath: [] },
     svg: { fontCache: 'none' },
+    startup: {
+      typeset: false,
+      ready() {
+        MathJax.startup.defaultReady();
+        const {SerializedMmlVisitor} = MathJax._.core.MmlTree.SerializedMmlVisitor;
+        const visitor = new SerializedMmlVisitor();
+        const toMathML = (node) => visitor.visitTree(node, MathJax.startup.document);
+        MathJax.tex2mml = (tex, display = false) => {
+          const doc = MathJax.startup.document;
+          const math = new doc.options.MathItem(tex, doc.inputJax[0], display);
+          math.setMetrics(...doc.getMetrics());
+          math.compile(doc);
+          return toMathML(math.root);
+        };
+      },
+    },
   };
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
@@ -120,6 +135,7 @@
     <tr>
       <th>Category</th>
       <th>LaTeX</th>
+      <th>Reference (SVG)</th>
       <th>LuaMML</th>
       <th>KaTeX</th>
       <th>MathJax</th>
@@ -135,7 +151,7 @@
 <div id="visual-output" hidden>
   <h2>Rendered output comparison</h2>
   <table>
-    <thead><tr><th>LaTeX</th><th>LuaMML (MathML)</th><th>KaTeX</th><th>MathJax</th></tr></thead>
+    <thead><tr><th>LaTeX</th><th>Reference (SVG)</th><th>LuaMML (MathML)</th><th>KaTeX (MathML)</th><th>MathJax (MathML)</th></tr></thead>
     <tbody id="vtbody"></tbody>
   </table>
 </div>
@@ -160,7 +176,11 @@ function renderKaTeX(tex) {
   return katex.renderToString(tex, { throwOnError: false, output: 'mathml' });
 }
 
-function renderMathJax(tex) {
+function renderMathJaxMML(tex) {
+  return MathJax.tex2mml(tex);
+}
+
+function renderMathJaxSVG(tex) {
   const node = MathJax.tex2svg(tex, { display: false });
   return node.innerHTML;
 }
@@ -196,8 +216,8 @@ async function waitForLibs() {
   await loadLuaMML();
   // Wait for KaTeX
   while (typeof katex === 'undefined') await new Promise(r => setTimeout(r, 100));
-  // Wait for MathJax
-  while (!window.MathJax?.tex2svg) await new Promise(r => setTimeout(r, 100));
+  // Wait for MathJax (tex2mml is added by our startup.ready hook)
+  while (!window.MathJax?.tex2mml) await new Promise(r => setTimeout(r, 100));
   setStatus('All libraries loaded.');
 }
 
@@ -220,17 +240,18 @@ async function runBenchmark() {
   for (const t of tests) {
     let tA, tB, tC;
     let errA = false, errB = false, errC = false;
-    let outA = '', outB = '', outC = '';
+    let outA = '', outB = '', outC = '', outSVG = '';
 
     try { tA = bench(() => renderLuaMML(t.tex), iters); outA = renderLuaMML(t.tex); } catch { tA = NaN; errA = true; }
     try { tB = bench(() => renderKaTeX(t.tex), iters); outB = renderKaTeX(t.tex); } catch { tB = NaN; errB = true; }
-    try { tC = bench(() => renderMathJax(t.tex), iters); outC = renderMathJax(t.tex); } catch { tC = NaN; errC = true; }
+    try { tC = bench(() => renderMathJaxMML(t.tex), iters); outC = renderMathJaxMML(t.tex); } catch { tC = NaN; errC = true; }
+    try { outSVG = renderMathJaxSVG(t.tex); } catch { outSVG = ''; }
 
     if (!errA) totalA += tA;
     if (!errB) totalB += tB;
     if (!errC) totalC += tC;
 
-    rows.push({ cat: t.cat, tex: t.tex, tA, tB, tC, errA, errB, errC, outA, outB, outC });
+    rows.push({ cat: t.cat, tex: t.tex, tA, tB, tC, errA, errB, errC, outA, outB, outC, outSVG });
   }
 
   // Find max for bar scaling
@@ -243,6 +264,7 @@ async function runBenchmark() {
     tr.innerHTML = `
       <td><span class="cat">${r.cat}</span></td>
       <td class="latex">${escHtml(r.tex)}</td>
+      <td class="render-cell">${r.outSVG || '<em>err</em>'}</td>
       <td class="render-cell">${r.errA ? '<em>err</em>' : r.outA}</td>
       <td class="render-cell">${r.errB ? '<em>err</em>' : r.outB}</td>
       <td class="render-cell">${r.errC ? '<em>err</em>' : r.outC}</td>
@@ -280,13 +302,15 @@ async function showVisual() {
   for (const t of tests) {
     const tr = document.createElement('tr');
 
-    let htmlA, htmlB, htmlC;
+    let htmlA, htmlB, htmlC, htmlSVG;
+    try { htmlSVG = renderMathJaxSVG(t.tex); } catch (e) { htmlSVG = `<em>Error: ${escHtml(String(e))}</em>`; }
     try { htmlA = renderLuaMML(t.tex); } catch (e) { htmlA = `<em>Error: ${escHtml(String(e))}</em>`; }
     try { htmlB = renderKaTeX(t.tex); } catch (e) { htmlB = `<em>Error: ${escHtml(String(e))}</em>`; }
-    try { htmlC = renderMathJax(t.tex); } catch (e) { htmlC = `<em>Error: ${escHtml(String(e))}</em>`; }
+    try { htmlC = renderMathJaxMML(t.tex); } catch (e) { htmlC = `<em>Error: ${escHtml(String(e))}</em>`; }
 
     tr.innerHTML = `
       <td class="latex">${escHtml(t.tex)}</td>
+      <td class="render-cell">${htmlSVG}</td>
       <td class="render-cell">${htmlA}</td>
       <td class="render-cell">${htmlB}</td>
       <td class="render-cell">${htmlC}</td>
