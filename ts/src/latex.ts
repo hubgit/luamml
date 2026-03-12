@@ -54,15 +54,15 @@ export interface RenderOptions {
 // ---------------------------------------------------------------------------
 
 type Token =
-  | { type: 'char'; value: string }
-  | { type: 'command'; name: string }
-  | { type: '{' }
-  | { type: '}' }
-  | { type: '^' }
-  | { type: '_' }
-  | { type: '&' }
-  | { type: 'newline' }
-  | { type: 'space' };
+  | { type: 'char'; value: string; _noexpand?: boolean }
+  | { type: 'command'; name: string; _noexpand?: boolean }
+  | { type: '{'; _noexpand?: boolean }
+  | { type: '}'; _noexpand?: boolean }
+  | { type: '^'; _noexpand?: boolean }
+  | { type: '_'; _noexpand?: boolean }
+  | { type: '&'; _noexpand?: boolean }
+  | { type: 'newline'; _noexpand?: boolean }
+  | { type: 'space'; _noexpand?: boolean };
 
 function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -129,13 +129,12 @@ function tokenize(input: string): Token[] {
 }
 
 // ---------------------------------------------------------------------------
-// Macro expansion
+// Macro expansion (KaTeX-style token-based)
 // ---------------------------------------------------------------------------
 
 function normalizeMacros(macros: Record<string, string | MacroDef>): Map<string, MacroDef> {
   const result = new Map<string, MacroDef>();
   for (const [key, value] of Object.entries(macros)) {
-    // Strip leading backslash if present
     const name = key.startsWith('\\') ? key.slice(1) : key;
     if (typeof value === 'string') {
       result.set(name, { args: 0, expansion: value });
@@ -146,327 +145,508 @@ function normalizeMacros(macros: Record<string, string | MacroDef>): Map<string,
   return result;
 }
 
-/** Read a command name starting at position i (after the backslash). Returns [name, newPos]. */
-function readCommandName(str: string, pos: number): [string, number] {
-  let name = '';
-  let i = pos;
-  if (i < str.length && /[a-zA-Z]/.test(str[i])) {
-    while (i < str.length && /[a-zA-Z]/.test(str[i])) {
-      name += str[i];
-      i++;
-    }
-    // Skip trailing whitespace after command name
-    while (i < str.length && /[ \t\n\r]/.test(str[i])) i++;
-  } else if (i < str.length) {
-    name = str[i];
-    i++;
-  }
-  return [name, i];
-}
-
-/** Read a braced group at position i. Returns [content, newPos]. */
-function readBracedArg(str: string, pos: number): [string, number] {
-  let i = pos;
-  while (i < str.length && /[ \t\n\r]/.test(str[i])) i++;
-  if (i >= str.length || str[i] !== '{') return ['', i];
-  i++; // consume {
-  let depth = 1;
-  let content = '';
-  while (i < str.length && depth > 0) {
-    if (str[i] === '{') depth++;
-    else if (str[i] === '}') {
-      depth--;
-      if (depth === 0) { i++; break; }
-    }
-    content += str[i];
-    i++;
-  }
-  return [content, i];
-}
-
-/** Read a single token (for macro arguments). Returns [token, newPos]. */
-function readSingleToken(str: string, pos: number): [string, number] {
-  let i = pos;
-  while (i < str.length && /[ \t\n\r]/.test(str[i])) i++;
-  if (i >= str.length) return ['', i];
-  if (str[i] === '{') return readBracedArg(str, i);
-  if (str[i] === '\\') {
-    i++;
-    const [name, newPos] = readCommandName(str, i);
-    return ['\\' + name, newPos];
-  }
-  return [str[i], i + 1];
-}
-
 /**
- * Process inline macro definitions (\def, \let, \newcommand, \renewcommand,
- * \gdef, \xdef, \edef, \DeclareMathOperator) and remove them from the input.
- */
-function processInlineDefs(input: string, macros: Map<string, MacroDef>): string {
-  let result = input;
-  let changed = true;
-
-  while (changed) {
-    changed = false;
-    let i = 0;
-    let out = '';
-
-    while (i < result.length) {
-      if (result[i] !== '\\') { out += result[i]; i++; continue; }
-
-      const cmdStart = i;
-      i++;
-      const [cmdName, afterCmd] = readCommandName(result, i);
-      i = afterCmd;
-
-      // \def\foo{expansion} or \def\foo#1#2{expansion with #1 and #2}
-      if (cmdName === 'def' || cmdName === 'gdef' || cmdName === 'xdef' || cmdName === 'edef') {
-        changed = true;
-        // Read the macro name
-        if (i < result.length && result[i] === '\\') {
-          i++;
-          const [macroName, afterName] = readCommandName(result, i);
-          i = afterName;
-          // Count #n parameter tokens
-          let argCount = 0;
-          while (i < result.length && result[i] === '#') {
-            i++; // skip #
-            if (i < result.length && /[0-9]/.test(result[i])) {
-              argCount = Math.max(argCount, parseInt(result[i]));
-              i++;
-            }
-          }
-          // Read expansion body
-          const [expansion, afterBody] = readBracedArg(result, i);
-          i = afterBody;
-          macros.set(macroName, { args: argCount, expansion });
-        }
-        continue;
-      }
-
-      // \let\foo=\bar  or  \let\foo\bar  or  \let\foo=x
-      if (cmdName === 'let') {
-        changed = true;
-        if (i < result.length && result[i] === '\\') {
-          i++;
-          const [macroName, afterName] = readCommandName(result, i);
-          i = afterName;
-          // Optional =
-          if (i < result.length && result[i] === '=') i++;
-          while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
-          // Read the value (a command or single char)
-          let value = '';
-          if (i < result.length && result[i] === '\\') {
-            i++;
-            const [valName, afterVal] = readCommandName(result, i);
-            i = afterVal;
-            value = '\\' + valName;
-          } else if (i < result.length) {
-            value = result[i];
-            i++;
-          }
-          macros.set(macroName, { args: 0, expansion: value });
-        }
-        continue;
-      }
-
-      // \newcommand\foo{expansion}  or  \newcommand{\foo}{expansion}
-      // \newcommand\foo[n]{expansion}  or  \newcommand{\foo}[n]{expansion}
-      // Also \renewcommand and \providecommand
-      if (cmdName === 'newcommand' || cmdName === 'renewcommand' || cmdName === 'providecommand') {
-        changed = true;
-        let macroName = '';
-        // Read macro name: either \foo or {\foo}
-        while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
-        if (i < result.length && result[i] === '{') {
-          i++; // skip {
-          if (i < result.length && result[i] === '\\') {
-            i++;
-            const [name, afterName] = readCommandName(result, i);
-            macroName = name;
-            i = afterName;
-          }
-          while (i < result.length && result[i] !== '}') i++;
-          if (i < result.length) i++; // skip }
-        } else if (i < result.length && result[i] === '\\') {
-          i++;
-          const [name, afterName] = readCommandName(result, i);
-          macroName = name;
-          i = afterName;
-        }
-        // Optional [n] argument count
-        let argCount = 0;
-        while (i < result.length && /[ \t\n\r]/.test(result[i])) i++;
-        if (i < result.length && result[i] === '[') {
-          i++;
-          let numStr = '';
-          while (i < result.length && result[i] !== ']') {
-            numStr += result[i]; i++;
-          }
-          if (i < result.length) i++; // skip ]
-          argCount = parseInt(numStr) || 0;
-        }
-        // Read expansion body
-        const [expansion, afterBody] = readBracedArg(result, i);
-        i = afterBody;
-        if (macroName) {
-          macros.set(macroName, { args: argCount, expansion });
-        }
-        continue;
-      }
-
-      // \DeclareMathOperator{\foo}{name} or \DeclareMathOperator*{\foo}{name}
-      if (cmdName === 'DeclareMathOperator') {
-        changed = true;
-        // Optional *
-        if (i < result.length && result[i] === '*') i++;
-        // Read macro name
-        const [macroBody, afterMacro] = readBracedArg(result, i);
-        i = afterMacro;
-        const macroName = macroBody.replace(/^\\/, '');
-        // Read operator name
-        const [opName, afterOp] = readBracedArg(result, i);
-        i = afterOp;
-        if (macroName) {
-          macros.set(macroName, { args: 0, expansion: `\\operatorname{${opName}}` });
-        }
-        continue;
-      }
-
-      // \expandafter — just skip it (it's a TeX primitive for macro ordering)
-      if (cmdName === 'expandafter') {
-        changed = true;
-        continue;
-      }
-
-      // \noexpand — just skip it
-      if (cmdName === 'noexpand') {
-        changed = true;
-        continue;
-      }
-
-      // \relax — just skip it
-      if (cmdName === 'relax') {
-        changed = true;
-        continue;
-      }
-
-      // Not a definition command — output as-is
-      out += result.slice(cmdStart, i);
-    }
-
-    result = out;
-  }
-  return result;
-}
-
-/**
- * Ensure command-name/argument boundaries are preserved in expansion strings.
- * When a command name (\foo) ends with letters and is immediately followed by
- * a letter (from argument substitution), TeX would keep them as separate tokens.
- * In string-based expansion they'd merge (\foox → unknown command \foox).
- * This function inserts a space where needed to maintain the boundary.
+ * Token-based macro expander inspired by KaTeX's MacroExpander ("gullet").
  *
- * We parse command names properly rather than using regex, because a naive
- * regex can't distinguish \alpha (one command) from \frac a (command + arg).
+ * Instead of doing string-level expansion before tokenization, this class
+ * wraps the token stream and expands macros lazily as tokens are consumed
+ * by the parser.  It maintains a token stack (in reverse order) so that
+ * expansion results are naturally consumed in the correct order.
+ *
+ * Key API for the parser:
+ *   future()          – peek at the next token without expanding
+ *   popToken()        – remove and return the next unexpanded token
+ *   expandNextToken() – recursively expand and return the next non-macro token
+ *   consumeSpaces()   – skip whitespace tokens
  */
-function ensureCommandBoundaries(str: string): string {
-  let result = '';
-  let i = 0;
-  while (i < str.length) {
-    if (str[i] === '\\' && i + 1 < str.length && /[a-zA-Z]/.test(str[i + 1])) {
-      // Read the command name
-      let j = i + 1;
-      while (j < str.length && /[a-zA-Z]/.test(str[j])) j++;
-      result += str.slice(i, j);
-      i = j;
-      // Skip existing whitespace
-      while (i < str.length && /[ \t\n\r]/.test(str[i])) {
-        result += str[i];
-        i++;
-      }
-      // If next char is a letter and there was no whitespace, add a space
-      if (i < str.length && /[a-zA-Z]/.test(str[i]) && j === i) {
-        result += ' ';
-      }
-    } else {
-      result += str[i];
-      i++;
+class MacroExpander {
+  private macros: Map<string, MacroDef>;
+  /** Token source – the flat tokenized input. */
+  private source: Token[];
+  private sourcePos: number;
+  /** Stack of tokens in REVERSE order (top = end of array). */
+  private stack: Token[];
+  private expansionCount: number;
+  private static MAX_EXPAND = 1000;
+
+  constructor(tokens: Token[], macros: Map<string, MacroDef>) {
+    this.source = tokens;
+    this.sourcePos = 0;
+    this.macros = macros;
+    this.stack = [];
+    this.expansionCount = 0;
+  }
+
+  // ---- Low-level token access ----
+
+  /** Peek at the next token without consuming it. */
+  future(): Token | null {
+    if (this.stack.length === 0) {
+      if (this.sourcePos >= this.source.length) return null;
+      this.stack.push(this.source[this.sourcePos++]);
+    }
+    return this.stack[this.stack.length - 1];
+  }
+
+  /** Remove and return the next unexpanded token. */
+  popToken(): Token | null {
+    this.future(); // ensure non-empty stack if possible
+    return this.stack.length > 0 ? this.stack.pop()! : null;
+  }
+
+  /** Push a token back onto the stack (for lookahead / expansion). */
+  pushToken(token: Token): void {
+    this.stack.push(token);
+  }
+
+  /** Push an array of tokens onto the stack (in reverse, so first token is on top). */
+  pushTokens(tokens: Token[]): void {
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      this.stack.push(tokens[i]);
     }
   }
-  return result;
-}
 
-function expandMacros(input: string, macros: Map<string, MacroDef>): string {
-  // First, process inline definitions (\def, \let, \newcommand, etc.)
-  let result = processInlineDefs(input, macros);
+  /** Skip whitespace tokens. */
+  consumeSpaces(): void {
+    while (true) {
+      const tok = this.future();
+      if (tok && tok.type === 'space') {
+        this.stack.pop();
+      } else {
+        break;
+      }
+    }
+  }
 
-  if (macros.size === 0) return result;
+  // ---- Argument reading (at token level) ----
 
-  const MAX_ITERATIONS = 100;
+  /**
+   * Consume a single macro argument from the token stream.
+   * If the next non-space token is '{', reads the entire braced group
+   * (returning the tokens inside, without the braces).
+   * Otherwise returns a single token.
+   */
+  consumeArg(): Token[] {
+    this.consumeSpaces();
+    const tok = this.popToken();
+    if (!tok) throw new ParseError('Expected argument, got end of input');
 
-  for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
-    let expanded = false;
+    if (tok.type === '{') {
+      // Read until matching '}'
+      const tokens: Token[] = [];
+      let depth = 1;
+      while (depth > 0) {
+        const t = this.popToken();
+        if (!t) throw new ParseError('Unexpected end of input in macro argument');
+        if (t.type === '{') depth++;
+        else if (t.type === '}') {
+          depth--;
+          if (depth === 0) break;
+        }
+        tokens.push(t);
+      }
+      return tokens;
+    }
+    return [tok];
+  }
 
+  /**
+   * Consume the specified number of arguments.
+   */
+  consumeArgs(numArgs: number): Token[][] {
+    const args: Token[][] = [];
+    for (let i = 0; i < numArgs; i++) {
+      args.push(this.consumeArg());
+    }
+    return args;
+  }
+
+  // ---- Expansion ----
+
+  /**
+   * Try to expand the next token once.
+   * Returns true if expansion occurred, false otherwise.
+   * After expansion, the result tokens are on the stack.
+   */
+  private expandOnce(): boolean {
+    const tok = this.popToken();
+    if (!tok) return false;
+
+    // Only commands can be macros
+    if (tok.type !== 'command') {
+      this.pushToken(tok);
+      return false;
+    }
+
+    // Handle inline definition commands — they consume tokens and register
+    // macros but produce no output tokens.
+    if (this.tryProcessDefinition(tok.name)) {
+      return true;
+    }
+
+    // Handle \expandafter — expand the token after the next token
+    if (tok.name === 'expandafter') {
+      const nextTok = this.popToken();
+      if (nextTok) {
+        // Expand the token after nextTok once
+        this.expandOnce();
+        // Push nextTok back so it's processed next
+        this.pushToken(nextTok);
+      }
+      return true;
+    }
+
+    // Handle \noexpand — next token should not be expanded
+    if (tok.name === 'noexpand') {
+      const nextTok = this.popToken();
+      if (nextTok) {
+        // Mark as non-expandable by converting command to a special form
+        // that won't match any macro (we push it with a noexpand flag)
+        const safeTok: Token = { ...nextTok, _noexpand: true } as Token & { _noexpand: boolean };
+        this.pushToken(safeTok);
+      }
+      return true;
+    }
+
+    // Handle \relax — just consume it
+    if (tok.name === 'relax') {
+      return true;
+    }
+
+    // Check noexpand flag
+    if ((tok as Token & { _noexpand?: boolean })._noexpand) {
+      // Push back without the flag, as a plain token
+      const clean: Token = { type: 'command', name: tok.name };
+      this.pushToken(clean);
+      return false;
+    }
+
+    // Look up in macro registry
+    const def = this.macros.get(tok.name);
+    if (!def) {
+      this.pushToken(tok);
+      return false;
+    }
+
+    // Guard against infinite expansion
+    this.expansionCount++;
+    if (this.expansionCount > MacroExpander.MAX_EXPAND) {
+      throw new ParseError('Too many macro expansions: possible infinite loop');
+    }
+
+    // Read arguments
+    let args: Token[][] = [];
+    if (def.args > 0) {
+      args = this.consumeArgs(def.args);
+    }
+
+    // Tokenize the expansion template and substitute arguments
+    const expansionTokens = tokenize(def.expansion);
+    const result = this.substituteArgs(expansionTokens, args);
+
+    // Push result onto stack (they'll be expanded on next calls)
+    this.pushTokens(result);
+    return true;
+  }
+
+  /**
+   * Substitute #1, #2, ... placeholders in expansion tokens with argument tokens.
+   */
+  private substituteArgs(tokens: Token[], args: Token[][]): Token[] {
+    if (args.length === 0) return tokens;
+
+    const result: Token[] = [];
     let i = 0;
-    let out = '';
-    while (i < result.length) {
-      if (result[i] === '\\') {
+    while (i < tokens.length) {
+      const tok = tokens[i];
+      // Check for # followed by a digit
+      if (tok.type === 'command' && tok.name === '#') {
+        // In tokenize, # becomes command '#' — but actually # isn't a command.
+        // Let's handle the case where the expansion string has #1, #2 etc.
+        // These are tokenized as char '#' followed by char '1' etc.
         i++;
-        if (i >= result.length) { out += '\\'; break; }
-
-        const [name, afterName] = readCommandName(result, i);
-        i = afterName;
-
-        const def = macros.get(name);
-        if (def) {
-          expanded = true;
-          if (def.args === 0) {
-            let expansion = def.expansion;
-            // Ensure command boundaries between expansion and following text
-            if (/[a-zA-Z]$/.test(expansion) && i < result.length && /[a-zA-Z]/.test(result[i])) {
-              expansion += ' ';
+        if (i < tokens.length) {
+          const next = tokens[i];
+          if (next.type === 'char' && /[1-9]/.test(next.value)) {
+            const argIdx = parseInt(next.value) - 1;
+            if (argIdx < args.length) {
+              result.push(...args[argIdx]);
             }
-            out += expansion;
-          } else {
-            const args: string[] = [];
-            for (let a = 0; a < def.args; a++) {
-              const [arg, afterArg] = readSingleToken(result, i);
-              args.push(arg);
-              i = afterArg;
-            }
-            let exp = def.expansion;
-            for (let a = 0; a < args.length; a++) {
-              exp = exp.replaceAll(`#${a + 1}`, args[a]);
-            }
-            // Ensure command boundaries after argument substitution
-            exp = ensureCommandBoundaries(exp);
-            // Also ensure boundary between expansion end and following text
-            if (/[a-zA-Z]$/.test(exp) && i < result.length && /[a-zA-Z]/.test(result[i])) {
-              exp += ' ';
-            }
-            out += exp;
+            i++;
+            continue;
           }
-        } else {
-          out += '\\' + name;
-          // readCommandName consumed trailing space — restore it if needed
-          // to prevent command from merging with following letter
-          if (/[a-zA-Z]/.test(name[name.length - 1]) &&
-              i < result.length && /[a-zA-Z]/.test(result[i])) {
-            out += ' ';
+          // ## → literal #
+          if (next.type === 'command' && next.name === '#') {
+            result.push(tok);
+            i++;
+            continue;
           }
+        }
+        result.push(tok);
+        continue;
+      }
+      // Also handle # as a char token (from tokenize, # is not special)
+      if (tok.type === 'char' && tok.value === '#') {
+        i++;
+        if (i < tokens.length) {
+          const next = tokens[i];
+          if (next.type === 'char' && /[1-9]/.test(next.value)) {
+            const argIdx = parseInt(next.value) - 1;
+            if (argIdx < args.length) {
+              result.push(...args[argIdx]);
+            }
+            i++;
+            continue;
+          }
+          // ## → literal #
+          if (next.type === 'char' && next.value === '#') {
+            result.push(tok);
+            i++;
+            continue;
+          }
+        }
+        result.push(tok);
+        continue;
+      }
+      result.push(tok);
+      i++;
+    }
+    return result;
+  }
+
+  /**
+   * Recursively expand tokens until the next non-expandable token is found.
+   * Returns that token (already removed from the stream).
+   */
+  expandNextToken(): Token | null {
+    while (true) {
+      if (this.expandOnce() === false) {
+        // The token on top of the stack is not expandable
+        return this.popToken();
+      }
+      // Expansion occurred — loop to try expanding the new top token
+    }
+  }
+
+  /**
+   * Peek at the next fully-expanded token without consuming it.
+   */
+  peekExpanded(): Token | null {
+    const tok = this.expandNextToken();
+    if (tok) this.pushToken(tok);
+    return tok;
+  }
+
+  // ---- Inline definition processing ----
+
+  /**
+   * Try to process an inline macro definition command.
+   * Returns true if the command was a definition and was processed.
+   */
+  private tryProcessDefinition(name: string): boolean {
+    if (name === 'def' || name === 'gdef' || name === 'xdef' || name === 'edef') {
+      this.processDef();
+      return true;
+    }
+    if (name === 'let') {
+      this.processLet();
+      return true;
+    }
+    if (name === 'newcommand' || name === 'renewcommand' || name === 'providecommand') {
+      this.processNewcommand();
+      return true;
+    }
+    if (name === 'DeclareMathOperator') {
+      this.processDeclareMathOperator();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Process \def\macroname#1#2{expansion}
+   */
+  private processDef(): void {
+    // Read the macro name (should be a command token)
+    this.consumeSpaces();
+    const nameTok = this.popToken();
+    if (!nameTok || nameTok.type !== 'command') {
+      return; // malformed \def — skip silently
+    }
+    const macroName = nameTok.name;
+
+    // Count #n parameter tokens
+    let argCount = 0;
+    while (true) {
+      const t = this.future();
+      if (t && t.type === 'char' && t.value === '#') {
+        this.popToken();
+        const numTok = this.popToken();
+        if (numTok && numTok.type === 'char' && /[0-9]/.test(numTok.value)) {
+          argCount = Math.max(argCount, parseInt(numTok.value));
         }
       } else {
-        out += result[i];
-        i++;
+        break;
       }
     }
 
-    result = out;
-    if (!expanded) break;
+    // Read expansion body (braced group)
+    const bodyTokens = this.consumeArg();
+    const expansion = this.tokensToString(bodyTokens);
+    this.macros.set(macroName, { args: argCount, expansion });
   }
 
-  return result;
+  /**
+   * Process \let\foo=\bar or \let\foo\bar
+   */
+  private processLet(): void {
+    this.consumeSpaces();
+    const nameTok = this.popToken();
+    if (!nameTok || nameTok.type !== 'command') return;
+    const macroName = nameTok.name;
+
+    // Optional =
+    this.consumeSpaces();
+    const eq = this.future();
+    if (eq && eq.type === 'char' && eq.value === '=') {
+      this.popToken();
+    }
+    this.consumeSpaces();
+
+    // Read the value
+    const valTok = this.popToken();
+    if (!valTok) return;
+    let value: string;
+    if (valTok.type === 'command') {
+      value = '\\' + valTok.name;
+    } else if (valTok.type === 'char') {
+      value = valTok.value;
+    } else {
+      return;
+    }
+    this.macros.set(macroName, { args: 0, expansion: value });
+  }
+
+  /**
+   * Process \newcommand{\foo}[n]{expansion}
+   */
+  private processNewcommand(): void {
+    this.consumeSpaces();
+
+    // Read macro name: either \foo or {\foo}
+    let macroName = '';
+    const t = this.future();
+    if (t && t.type === '{') {
+      this.popToken(); // consume {
+      const inner = this.popToken();
+      if (inner && inner.type === 'command') {
+        macroName = inner.name;
+      }
+      // consume until }
+      while (true) {
+        const tok = this.popToken();
+        if (!tok || tok.type === '}') break;
+      }
+    } else if (t && t.type === 'command') {
+      this.popToken();
+      macroName = t.name;
+    }
+
+    // Optional [n] argument count
+    let argCount = 0;
+    this.consumeSpaces();
+    const bracket = this.future();
+    if (bracket && bracket.type === 'char' && bracket.value === '[') {
+      this.popToken(); // consume [
+      let numStr = '';
+      while (true) {
+        const tok = this.popToken();
+        if (!tok) break;
+        if (tok.type === 'char' && tok.value === ']') break;
+        if (tok.type === 'char') numStr += tok.value;
+      }
+      argCount = parseInt(numStr) || 0;
+    }
+
+    // Read expansion body
+    const bodyTokens = this.consumeArg();
+    const expansion = this.tokensToString(bodyTokens);
+    if (macroName) {
+      this.macros.set(macroName, { args: argCount, expansion });
+    }
+  }
+
+  /**
+   * Process \DeclareMathOperator{\foo}{name} or \DeclareMathOperator*{\foo}{name}
+   */
+  private processDeclareMathOperator(): void {
+    // Optional *
+    const star = this.future();
+    if (star && star.type === 'char' && star.value === '*') {
+      this.popToken();
+    }
+
+    // Read macro name from braced group
+    const nameTokens = this.consumeArg();
+    let macroName = '';
+    for (const t of nameTokens) {
+      if (t.type === 'command') macroName = t.name;
+      else if (t.type === 'char') macroName += t.value;
+    }
+    macroName = macroName.replace(/^\\/, '');
+
+    // Read operator name
+    const opTokens = this.consumeArg();
+    const opName = this.tokensToString(opTokens);
+
+    if (macroName) {
+      this.macros.set(macroName, { args: 0, expansion: `\\operatorname{${opName}}` });
+    }
+  }
+
+  /**
+   * Convert tokens back to a string (for storing expansion templates).
+   */
+  private tokensToString(tokens: Token[]): string {
+    let result = '';
+    for (let i = 0; i < tokens.length; i++) {
+      const tok = tokens[i];
+      switch (tok.type) {
+        case 'command': {
+          const needsSpace = /[a-zA-Z]/.test(tok.name[tok.name.length - 1]) &&
+            i + 1 < tokens.length &&
+            tokens[i + 1].type === 'char' && /[a-zA-Z]/.test((tokens[i + 1] as { type: 'char'; value: string }).value);
+          result += '\\' + tok.name + (needsSpace ? ' ' : '');
+          break;
+        }
+        case 'char':
+          result += tok.value;
+          break;
+        case '{':
+          result += '{';
+          break;
+        case '}':
+          result += '}';
+          break;
+        case '^':
+          result += '^';
+          break;
+        case '_':
+          result += '_';
+          break;
+        case '&':
+          result += '&';
+          break;
+        case 'newline':
+          result += '\\\\';
+          break;
+        case 'space':
+          result += ' ';
+          break;
+      }
+    }
+    return result;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -474,23 +654,28 @@ function expandMacros(input: string, macros: Map<string, MacroDef>): string {
 // ---------------------------------------------------------------------------
 
 class Parser {
-  private tokens: Token[];
-  private pos: number;
+  private expander: MacroExpander;
 
-  constructor(tokens: Token[]) {
-    this.tokens = tokens;
-    this.pos = 0;
+  constructor(expander: MacroExpander) {
+    this.expander = expander;
   }
 
+  /**
+   * Peek at the next fully-expanded token without consuming it.
+   */
   private peek(): Token | null {
-    return this.pos < this.tokens.length ? this.tokens[this.pos] : null;
+    return this.expander.peekExpanded();
   }
 
+  /**
+   * Consume and return the next fully-expanded token.
+   */
   private advance(): Token {
-    if (this.pos >= this.tokens.length) {
+    const tok = this.expander.expandNextToken();
+    if (!tok) {
       throw new ParseError('Unexpected end of input');
     }
-    return this.tokens[this.pos++];
+    return tok;
   }
 
   private expect(type: string): Token {
@@ -502,7 +687,9 @@ class Parser {
   }
 
   private skipSpaces(): void {
-    while (this.peek()?.type === 'space') this.pos++;
+    while (this.peek()?.type === 'space') {
+      this.expander.expandNextToken();
+    }
   }
 
   /** Parse a full expression: sequence of items until a stop token. */
@@ -718,15 +905,15 @@ class Parser {
           }
           // Allow one decimal point followed by more digits
           if (v === '.') {
-            const saved = this.pos;
-            this.advance();
+            const dotTok = this.advance(); // consume the '.'
             const afterDot = this.peek();
             if (afterDot?.type === 'char' &&
                 /[0-9]/.test((afterDot as { type: 'char'; value: string }).value)) {
               digits += '.';
               continue; // next iteration will pick up the digit
             } else {
-              this.pos = saved; // backtrack
+              // backtrack: push the dot token back
+              this.expander.pushToken(dotTok);
               break;
             }
           }
@@ -1298,8 +1485,9 @@ class Parser {
     this.expect('{');
     let text = '';
     let depth = 1;
-    while (this.pos < this.tokens.length && depth > 0) {
-      const t = this.advance();
+    while (depth > 0) {
+      const t = this.expander.expandNextToken();
+      if (!t) break;
       if (t.type === '{') {
         depth++;
         text += '{';
@@ -1700,8 +1888,9 @@ class Parser {
     this.expect('{');
     let text = '';
     let depth = 1;
-    while (this.pos < this.tokens.length && depth > 0) {
-      const t = this.advance();
+    while (depth > 0) {
+      const t = this.expander.expandNextToken();
+      if (!t) break;
       if (t.type === '{') { depth++; text += '{'; }
       else if (t.type === '}') {
         depth--;
@@ -2568,15 +2757,14 @@ class Parser {
       }
     };
 
-    while (this.pos < this.tokens.length && depth > 0) {
-      const tok = this.tokens[this.pos];
+    while (depth > 0) {
+      const tok = this.expander.expandNextToken();
+      if (!tok) break;
       if (tok.type === '{') {
         depth++;
-        this.pos++;
       } else if (tok.type === '}') {
         depth--;
-        if (depth === 0) { this.pos++; break; }
-        this.pos++;
+        if (depth === 0) break;
       } else if (tok.type === 'char') {
         const ch = tok.value;
         if (/[A-Z]/.test(ch)) {
@@ -2584,74 +2772,63 @@ class Parser {
           flushText();
           let symbol = ch;
           // Look ahead for lowercase letters
-          while (this.pos + 1 < this.tokens.length) {
-            const next = this.tokens[this.pos + 1];
-            if (next.type === 'char' && /[a-z]/.test(next.value)) {
+          while (true) {
+            const next = this.expander.future();
+            if (next && next.type === 'char' && /[a-z]/.test(next.value)) {
               symbol += next.value;
-              this.pos++;
+              this.expander.popToken();
             } else {
               break;
             }
           }
           parts.push(elem('mi', [symbol], { mathvariant: 'normal' }));
-          this.pos++;
         } else if (/[0-9]/.test(ch)) {
           // Subscript number
           flushText();
           let num = ch;
-          while (this.pos + 1 < this.tokens.length) {
-            const next = this.tokens[this.pos + 1];
-            if (next.type === 'char' && /[0-9]/.test(next.value)) {
+          while (true) {
+            const next = this.expander.future();
+            if (next && next.type === 'char' && /[0-9]/.test(next.value)) {
               num += next.value;
-              this.pos++;
+              this.expander.popToken();
             } else {
               break;
             }
           }
           parts.push(elem('mn', [num]));
-          this.pos++;
         } else if (ch === '+') {
           flushText();
           parts.push(elem('mo', ['+']));
-          this.pos++;
         } else if (ch === '-') {
           flushText();
           // Check for arrow ->
-          if (this.pos + 1 < this.tokens.length) {
-            const next = this.tokens[this.pos + 1];
-            if (next.type === 'char' && next.value === '>') {
-              parts.push(elem('mo', ['\u2192']));
-              this.pos += 2;
-              continue;
-            }
+          const next = this.expander.future();
+          if (next && next.type === 'char' && next.value === '>') {
+            this.expander.popToken();
+            parts.push(elem('mo', ['\u2192']));
+            continue;
           }
           parts.push(elem('mo', ['-']));
-          this.pos++;
         } else if (ch === '=') {
           flushText();
           parts.push(elem('mo', ['=']));
-          this.pos++;
         } else if (ch === '(' || ch === ')' || ch === '[' || ch === ']') {
           flushText();
           parts.push(elem('mo', [ch]));
-          this.pos++;
         } else if (ch === '^') {
           // Superscript handling
           flushText();
-          this.pos++;
         } else if (ch === ' ' || ch === '\u00A0') {
-          this.pos++;
+          // skip
         } else {
           currentText += ch;
-          this.pos++;
         }
       } else if (tok.type === '_') {
         // Subscript - the number after should already be handled
-        this.pos++;
       } else if (tok.type === '^') {
-        this.pos++;
+        // skip
       } else if (tok.type === 'space') {
-        this.pos++;
+        // skip
       } else if (tok.type === 'command') {
         flushText();
         // Handle some common chem commands
@@ -2664,9 +2841,6 @@ class Parser {
         } else {
           parts.push(elem('mtext', ['\\' + tok.name]));
         }
-        this.pos++;
-      } else {
-        this.pos++;
       }
     }
     flushText();
@@ -2737,9 +2911,9 @@ export class ParseError extends Error {
  */
 export function render(input: string, options: RenderOptions = {}): MathMLElement {
   const macros = options.macros ? normalizeMacros(options.macros) : new Map();
-  const expanded = expandMacros(input, macros);
-  const tokens = tokenize(expanded);
-  const parser = new Parser(tokens);
+  const tokens = tokenize(input);
+  const expander = new MacroExpander(tokens, macros);
+  const parser = new Parser(expander);
   const body = parser.parseExpression();
 
   const math = elem('math', body.tag === 'mrow' ? body.children : [body], {
