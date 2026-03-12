@@ -406,9 +406,14 @@ export const accents: Record<string, AccentDef> = {
   vec:        { char: '\u2192', over: true },
   overrightarrow: { char: '\u2192', over: true },
   overleftarrow:  { char: '\u2190', over: true },
+  overleftrightarrow: { char: '\u2194', over: true },
+  underrightarrow: { char: '\u2192', over: false },
+  underleftarrow:  { char: '\u2190', over: false },
+  underleftrightarrow: { char: '\u2194', over: false },
   dot:        { char: '\u02D9', over: true },
   ddot:       { char: '\u00A8', over: true },
   dddot:      { char: '\u20DB', over: true },
+  ddddot:     { char: '\u20DC', over: true },
   breve:      { char: '\u02D8', over: true },
   check:      { char: '\u02C7', over: true },
   acute:      { char: '\u00B4', over: true },
@@ -425,7 +430,9 @@ export const accents: Record<string, AccentDef> = {
 
 /** Whether an accent should be stretchy. */
 export const wideAccents = new Set([
-  'widehat', 'widetilde', 'overline', 'overrightarrow', 'overleftarrow',
+  'widehat', 'widetilde', 'overline',
+  'overrightarrow', 'overleftarrow', 'overleftrightarrow',
+  'underrightarrow', 'underleftarrow', 'underleftrightarrow',
   'underline', 'underbrace', 'overbrace',
   'overparen', 'underparen', 'overbracket', 'underbracket',
 ]);

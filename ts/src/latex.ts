@@ -731,6 +731,11 @@ class Parser {
       return this.parseSqrt();
     if (name === 'left')
       return this.parseLeftRight();
+    if (name === 'big' || name === 'Big' || name === 'bigg' || name === 'Bigg' ||
+        name === 'bigl' || name === 'Bigl' || name === 'biggl' || name === 'Biggl' ||
+        name === 'bigr' || name === 'Bigr' || name === 'biggr' || name === 'Biggr' ||
+        name === 'bigm' || name === 'Bigm' || name === 'biggm' || name === 'Biggm')
+      return this.parseBigDelim(name);
     if (name === 'binom' || name === 'dbinom' || name === 'tbinom')
       return this.parseBinom(name);
     if (name === 'overset')
@@ -831,6 +836,18 @@ class Parser {
       return this.parseRule();
     if (name === 'raisebox')
       return this.parseRaisebox();
+
+    // --- Bold math symbols ---
+
+    if (name === 'boldsymbol' || name === 'bm')
+      return this.parseBoldSymbol();
+    if (name === 'pmb')
+      return this.parsePoorManBold();
+
+    // --- Struts ---
+
+    if (name === 'mathstrut')
+      return elem('mpadded', [elem('mphantom', [elem('mo', ['('], { stretchy: 'false' })])], { width: '0px' });
 
     // --- Miscellaneous ---
 
@@ -1050,6 +1067,25 @@ class Parser {
     throw new ParseError('Expected delimiter');
   }
 
+  private parseBigDelim(name: string): MathMLElement {
+    // Size map: big=1.2em, Big=1.8em, bigg=2.4em, Bigg=3em
+    const sizeMap: Record<string, string> = {
+      big: '1.2em', Big: '1.8em', bigg: '2.4em', Bigg: '3em',
+    };
+    const base = name.replace(/^(big|Big|bigg|Bigg)[lrm]?$/, '$1');
+    const size = sizeMap[base] || '1.2em';
+    const suffix = name.slice(base.length); // 'l', 'r', 'm', or ''
+    const fence = suffix === 'l' || suffix === 'r';
+    const delim = this.readDelimiter();
+    if (!delim) return elem('mo');
+    return elem('mo', [delim], {
+      fence: fence ? 'true' : 'false',
+      stretchy: 'true',
+      minsize: size,
+      maxsize: size,
+    });
+  }
+
   private parseBinom(variant: string): MathMLElement {
     const n = this.parseArgSingle();
     const k = this.parseArgSingle();
@@ -1198,6 +1234,21 @@ class Parser {
     else if (cmd === 'texttt') attrs.mathvariant = 'monospace';
 
     return elem('mtext', [preserveSpaces(text)], attrs);
+  }
+
+  private parseBoldSymbol(): MathMLElement {
+    const body = this.parseArgSingle();
+    // For simple mi, use bold-italic (matching TeX behavior for \boldsymbol)
+    if (body.tag === 'mi' && body.children.length === 1) {
+      body.attrs.mathvariant = 'bold-italic';
+      return body;
+    }
+    return elem('mstyle', [body], { mathvariant: 'bold-italic' });
+  }
+
+  private parsePoorManBold(): MathMLElement {
+    const body = this.parseArgSingle();
+    return elem('mstyle', [body], { mathvariant: 'bold' });
   }
 
   private parseMathFont(cmd: string): MathMLElement {
