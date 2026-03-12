@@ -27,6 +27,8 @@ const uprightSymbols = new Set([
   'infty', 'emptyset', 'varnothing', 'partial', 'nabla',
   'Re', 'Im', 'aleph', 'wp', 'mho', 'Finv', 'Game',
   'clubsuit', 'diamondsuit', 'heartsuit', 'spadesuit',
+  // Additional upright symbols
+  'hbar', 'hslash', 'ell', 'eth', 'digamma', 'varkappa',
 ]);
 
 // ---------------------------------------------------------------------------
