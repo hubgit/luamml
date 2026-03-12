@@ -430,6 +430,12 @@ export const wideAccents = new Set([
   'overparen', 'underparen', 'overbracket', 'underbracket',
 ]);
 
+/** Over/under decorations that are not true accents (no accent/accentunder attr). */
+export const nonAccentDecorations = new Set([
+  'overbrace', 'underbrace', 'overparen', 'underparen',
+  'overbracket', 'underbracket',
+]);
+
 /** Named math operators (upright, no limits by default). */
 export const operatorNames = new Set([
   'arccos', 'arcsin', 'arctan', 'arg', 'cos', 'cosh', 'cot', 'coth',

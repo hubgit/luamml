@@ -8,8 +8,8 @@ import type { MathMLElement } from './types.js';
 import { elem } from './types.js';
 import { writeXml } from './xmlwriter.js';
 import {
-  symbols, accents, wideAccents, operatorNames, operatorNamesWithLimits,
-  bigOperators, delimiters, fontCommands,
+  symbols, accents, wideAccents, nonAccentDecorations, operatorNames,
+  operatorNamesWithLimits, bigOperators, delimiters, fontCommands,
 } from './latex-commands.js';
 
 // Symbols that are upright in TeX and need mathvariant="normal" as single-char <mi>.
@@ -1215,8 +1215,12 @@ class Parser {
     const stretchy = wideAccents.has(name);
     const accentMo = elem('mo', [def.char], { stretchy: stretchy ? 'true' : 'false' });
     const tag = def.over ? 'mover' : 'munder';
-    const attrKey = def.over ? 'accent' : 'accentunder';
-    return elem(tag, [body, accentMo], { [attrKey]: 'true' });
+    const isAccent = !nonAccentDecorations.has(name);
+    const attrs: Record<string, string> = {};
+    if (isAccent) {
+      attrs[def.over ? 'accent' : 'accentunder'] = 'true';
+    }
+    return elem(tag, [body, accentMo], attrs);
   }
 
   private parseEnvironment(): MathMLElement {

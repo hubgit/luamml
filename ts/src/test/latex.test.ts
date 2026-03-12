@@ -808,7 +808,7 @@ describe('LaTeX parser', () => {
     it('parses \\overparen', () => {
       const el = renderSingle('\\overparen{AB}');
       assert.equal(el.tag, 'mover');
-      assert.equal(el.attrs.accent, 'true');
+      assert.equal(el.attrs.accent, undefined);
     });
 
     it('parses \\underparen', () => {
