@@ -403,7 +403,7 @@ export const accents: Record<string, AccentDef> = {
   widetilde:  { char: '\u0303', over: true },
   bar:        { char: '\u0304', over: true },
   overline:   { char: '\u0305', over: true },
-  vec:        { char: '\u20D7', over: true },
+  vec:        { char: '\u2192', over: true },
   overrightarrow: { char: '\u2192', over: true },
   overleftarrow:  { char: '\u2190', over: true },
   dot:        { char: '\u02D9', over: true },
