@@ -24,7 +24,7 @@
         MathJax.tex2mml = (tex, display = false) => {
           const doc = MathJax.startup.document;
           const math = new doc.options.MathItem(tex, doc.inputJax[0], display);
-          math.setMetrics(...doc.getMetrics());
+          math.setMetrics(16, 8, 1000000, 100000, 1);
           math.compile(doc);
           return toMathML(math.root);
         };
