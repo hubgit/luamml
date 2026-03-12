@@ -20,10 +20,12 @@
         MathJax.startup.defaultReady();
         const {SerializedMmlVisitor} = MathJax._.core.MmlTree.SerializedMmlVisitor;
         const visitor = new SerializedMmlVisitor();
-        const toMathML = (node) => visitor.visitTree(node, MathJax.startup.document);
+        const doc = MathJax.startup.document;
+        const MathItem = doc.options.MathItem;
+        const inputJax = doc.inputJax[0];
+        const toMathML = (node) => visitor.visitTree(node, doc);
         MathJax.tex2mml = (tex, display = false) => {
-          const doc = MathJax.startup.document;
-          const math = new doc.options.MathItem(tex, doc.inputJax[0], display);
+          const math = new MathItem(tex, inputJax, display);
           math.setMetrics(16, 8, 1000000, 100000, 1);
           math.compile(doc);
           return toMathML(math.root);
