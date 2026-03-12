@@ -1215,12 +1215,16 @@ class Parser {
     const stretchy = wideAccents.has(name);
     const accentMo = elem('mo', [def.char], { stretchy: stretchy ? 'true' : 'false' });
     const tag = def.over ? 'mover' : 'munder';
-    const isAccent = !nonAccentDecorations.has(name);
+    const isDecoration = nonAccentDecorations.has(name);
     const attrs: Record<string, string> = {};
-    if (isAccent) {
+    if (!isDecoration) {
       attrs[def.over ? 'accent' : 'accentunder'] = 'true';
     }
-    return elem(tag, [body, accentMo], attrs);
+    const meta: Record<string, unknown> = {};
+    if (isDecoration) {
+      meta[':limits'] = true;
+    }
+    return elem(tag, [body, accentMo], attrs, meta);
   }
 
   private parseEnvironment(): MathMLElement {
