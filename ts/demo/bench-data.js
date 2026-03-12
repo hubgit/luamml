@@ -246,4 +246,105 @@ export const tests = [
   { cat: 'Chemistry', tex: '\\ce{H2O}' },
   { cat: 'Chemistry', tex: '\\ce{2H2 + O2 -> 2H2O}' },
   { cat: 'Chemistry', tex: '\\ce{CO2 + H2O}' },
+
+  // --- Big delimiters ---
+  { cat: 'Big delims', tex: '\\bigl( x \\bigr) + \\Bigl[ y \\Bigr]' },
+  { cat: 'Big delims', tex: '\\biggl\\{ a + b \\biggr\\} + \\Biggl\\langle c \\Biggr\\rangle' },
+  { cat: 'Big delims', tex: '\\big\\| x \\big\\| \\leq \\Big\\| y \\Big\\|' },
+
+  // --- Bold variants ---
+  { cat: 'Bold', tex: '\\boldsymbol{\\alpha + \\beta}' },
+  { cat: 'Bold', tex: '\\bm{x} \\cdot \\bm{y} = \\|\\bm{x}\\| \\|\\bm{y}\\| \\cos\\theta' },
+  { cat: 'Bold', tex: '\\pmb{A} \\pmb{x} = \\pmb{b}' },
+
+  // --- Math strut ---
+  { cat: 'Layout', tex: '\\sqrt{\\mathstrut a} + \\sqrt{\\mathstrut b}' },
+
+  // --- Inline macros ---
+  { cat: 'Macros', tex: '\\def\\R{\\mathbb{R}} f: \\R \\to \\R' },
+  { cat: 'Macros', tex: '\\newcommand\\norm[1]{\\left\\| #1 \\right\\|} \\norm{x - y}' },
+
+  // --- Infix fractions ---
+  { cat: 'Infix frac', tex: '{a + b \\over c + d}' },
+  { cat: 'Infix frac', tex: '{n \\choose k} = {n-1 \\choose k-1} + {n-1 \\choose k}' },
+  { cat: 'Infix frac', tex: '{a \\atop b}' },
+
+  // --- operatorname* ---
+  { cat: 'Operators', tex: '\\operatorname*{arg\\,max}_{\\theta} \\mathcal{L}(\\theta)' },
+
+  // --- Additional arrow decorations ---
+  { cat: 'Accents+', tex: '\\overleftrightarrow{AB} + \\underleftarrow{CD}' },
+  { cat: 'Accents+', tex: '\\underrightarrow{EF} + \\underleftrightarrow{GH}' },
+
+  // ---------------------------------------------------------------------------
+  // Famous equations and identities
+  // ---------------------------------------------------------------------------
+
+  // --- Euler's identity (already present as e^{iπ}+1=0, add full form) ---
+  { cat: 'Famous', tex: 'e^{i\\theta} = \\cos\\theta + i\\sin\\theta' },
+
+  // --- Pythagorean theorem ---
+  { cat: 'Famous', tex: 'a^2 + b^2 = c^2' },
+
+  // --- Einstein's mass-energy equivalence ---
+  { cat: 'Famous', tex: 'E = mc^2' },
+
+  // --- Einstein field equations ---
+  { cat: 'Famous', tex: 'R_{\\mu\\nu} - \\frac{1}{2} R g_{\\mu\\nu} + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4} T_{\\mu\\nu}' },
+
+  // --- Schrödinger equation ---
+  { cat: 'Famous', tex: 'i\\hbar \\frac{\\partial}{\\partial t} \\Psi = \\hat{H} \\Psi' },
+
+  // --- Maxwell's equations (divergence form) ---
+  { cat: 'Famous', tex: '\\nabla \\cdot \\vec{E} = \\frac{\\rho}{\\varepsilon_0}' },
+  { cat: 'Famous', tex: '\\nabla \\cdot \\vec{B} = 0' },
+
+  // --- Cauchy integral formula ---
+  { cat: 'Famous', tex: 'f(a) = \\frac{1}{2\\pi i} \\oint_\\gamma \\frac{f(z)}{z - a} \\, dz' },
+
+  // --- Fourier transform ---
+  { cat: 'Famous', tex: '\\hat{f}(\\xi) = \\int_{-\\infty}^{\\infty} f(x) e^{-2\\pi i x \\xi} \\, dx' },
+
+  // --- Navier-Stokes ---
+  { cat: 'Famous', tex: '\\rho \\left( \\frac{\\partial \\vec{v}}{\\partial t} + \\vec{v} \\cdot \\nabla \\vec{v} \\right) = -\\nabla p + \\mu \\nabla^2 \\vec{v} + \\vec{f}' },
+
+  // --- Stirling's approximation ---
+  { cat: 'Famous', tex: 'n! \\sim \\sqrt{2\\pi n} \\left( \\frac{n}{e} \\right)^n' },
+
+  // --- Riemann zeta function ---
+  { cat: 'Famous', tex: '\\zeta(s) = \\sum_{n=1}^{\\infty} \\frac{1}{n^s} = \\prod_{p \\text{ prime}} \\frac{1}{1 - p^{-s}}' },
+
+  // --- Taylor series ---
+  { cat: 'Famous', tex: 'f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!} (x - a)^n' },
+
+  // --- Stokes' theorem ---
+  { cat: 'Famous', tex: '\\int_M d\\omega = \\oint_{\\partial M} \\omega' },
+
+  // --- Euler product for pi ---
+  { cat: 'Famous', tex: '\\frac{\\pi}{4} = 1 - \\frac{1}{3} + \\frac{1}{5} - \\frac{1}{7} + \\cdots' },
+
+  // --- Dirac equation ---
+  { cat: 'Famous', tex: '(i \\gamma^\\mu \\partial_\\mu - m) \\psi = 0' },
+
+  // --- Shannon entropy ---
+  { cat: 'Famous', tex: 'H(X) = -\\sum_{i} p(x_i) \\log p(x_i)' },
+
+  // --- Heisenberg uncertainty principle ---
+  { cat: 'Famous', tex: '\\Delta x \\, \\Delta p \\geq \\frac{\\hbar}{2}' },
+
+  // --- Boltzmann entropy ---
+  { cat: 'Famous', tex: 'S = k_B \\ln \\Omega' },
+
+  // --- Lorentz transformation ---
+  { cat: 'Famous', tex: 't\' = \\gamma \\left( t - \\frac{vx}{c^2} \\right), \\quad x\' = \\gamma (x - vt)' },
+
+  // --- Normal distribution ---
+  { cat: 'Famous', tex: 'f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}' },
+
+  // --- Determinant via Leibniz formula ---
+  { cat: 'Famous', tex: '\\det(A) = \\sum_{\\sigma \\in S_n} \\operatorname{sgn}(\\sigma) \\prod_{i=1}^{n} a_{i,\\sigma(i)}' },
+
+  // --- Residue theorem ---
+  { cat: 'Famous', tex: '\\oint_\\gamma f(z) \\, dz = 2\\pi i \\sum_{k} \\operatorname{Res}(f, a_k)' },
 ];
+
