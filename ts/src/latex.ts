@@ -12,6 +12,11 @@ import {
   operatorNamesWithLimits, bigOperators, delimiters, fontCommands,
 } from './latex-commands.js';
 
+/** Replace leading/trailing spaces with nbsp so they survive HTML parsing in mtext. */
+function preserveSpaces(text: string): string {
+  return text.replace(/^ /, '\u00A0').replace(/ $/, '\u00A0');
+}
+
 // Symbols that are upright in TeX and need mathvariant="normal" as single-char <mi>.
 // Without this, MathML renders single-char <mi> as italic by default.
 const uprightSymbols = new Set([
@@ -1192,7 +1197,7 @@ class Parser {
     else if (cmd === 'textsf') attrs.mathvariant = 'sans-serif';
     else if (cmd === 'texttt') attrs.mathvariant = 'monospace';
 
-    return elem('mtext', [text], attrs);
+    return elem('mtext', [preserveSpaces(text)], attrs);
   }
 
   private parseMathFont(cmd: string): MathMLElement {
@@ -1495,7 +1500,7 @@ class Parser {
       else if (t.type === 'newline') text += ' ';
       else if (t.type === 'command') text += (t as { type: 'command'; name: string }).name;
     }
-    return elem('mtext', [text]);
+    return elem('mtext', [preserveSpaces(text)]);
   }
 
   /** Parse a braced table: {rows with & and \\}. */
