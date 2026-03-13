@@ -17,18 +17,40 @@ function preserveSpaces(text: string): string {
   return text.replace(/^ /, '\u00A0').replace(/ $/, '\u00A0');
 }
 
+// Characters that are stretchy by default in MathML and need stretchy="false"
+// when used as ordinary (non-\left/\right) delimiters/arrows.
+const stretchyChars = new Set([
+  '(', ')', '[', ']', '{', '}', '|', '\u2016',       // basic fences
+  '\u2191', '\u2193', '\u2195',                       // ↑ ↓ ↕
+  '\u21D1', '\u21D3', '\u21D5',                       // ⇑ ⇓ ⇕
+  '\u27E8', '\u27E9',                                 // ⟨ ⟩
+  '\u230A', '\u230B', '\u2308', '\u2309',             // ⌊ ⌋ ⌈ ⌉
+  '\u23B0', '\u23B1',                                 // ⎰ ⎱ (moustache)
+  '\u27EE', '\u27EF',                                 // ⟮ ⟯ (group)
+  '/',  '\\',                                         // slashes
+  '\u2192', '\u2190', '\u21D2', '\u21D0',             // → ← ⇒ ⇐
+  '\u2194', '\u21D4',                                 // ↔ ⇔
+  '\u27F5', '\u27F6', '\u27F7', '\u27F8', '\u27F9', '\u27FA', // long arrows
+  '\u21A6', '\u27FC',                                 // ↦ ⟼
+  '\u221A',                                           // √ (surd)
+]);
+
+// Fence characters — used to decide whether to add fence="false" when
+// a delimiter symbol appears outside \left/\right context.
+const fenceChars = new Set([
+  '(', ')', '[', ']', '{', '}', '|', '\u2016',
+  '\u27E8', '\u27E9', '\u230A', '\u230B', '\u2308', '\u2309',
+  '\u23B0', '\u23B1', '\u27EE', '\u27EF',
+]);
+
 // Symbols that are upright in TeX and need mathvariant="normal" as single-char <mi>.
-// Without this, MathML renders single-char <mi> as italic by default.
+// Only needed for characters in the "default italic" range of MathML:
+// Latin (a-z, A-Z) and Greek (α-ω, Α-Ω). Other Unicode symbols (ℏ, ∂, ∞, etc.)
+// don't default to italic so they don't need mathvariant="normal".
 const uprightSymbols = new Set([
-  // Uppercase Greek
+  // Uppercase Greek letters
   'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon',
   'Phi', 'Psi', 'Omega',
-  // Miscellaneous upright symbols
-  'infty', 'emptyset', 'varnothing', 'partial', 'nabla',
-  'Re', 'Im', 'aleph', 'wp', 'mho', 'Finv', 'Game',
-  'clubsuit', 'diamondsuit', 'heartsuit', 'spadesuit',
-  // Additional upright symbols
-  'hbar', 'hslash', 'ell', 'eth', 'digamma', 'varkappa',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -736,29 +758,88 @@ class Parser {
             t.name === 'abovewithdelims') {
           const leftDelim = this.readDelimiter();
           const rightDelim = this.readDelimiter();
+
+          // \abovewithdelims also reads a dimension
+          let aboveDimStr = '';
+          if (t.name === 'abovewithdelims') {
+            this.skipSpaces();
+            while (true) {
+              const p = this.peek();
+              if (!p) break;
+              if (p.type === 'char') {
+                const v = (p as { type: 'char'; value: string }).value;
+                if (/[0-9.a-z]/.test(v)) {
+                  aboveDimStr += v;
+                  this.advance();
+                  continue;
+                }
+              }
+              break;
+            }
+          }
+
           const denom = this.parseExpression();
           const attrs: Record<string, string | number | boolean | undefined> = {};
-          if (t.name === 'atopwithdelims' || t.name === 'abovewithdelims') {
+          if (t.name === 'atopwithdelims') {
             attrs.linethickness = '0';
+          } else if (t.name === 'abovewithdelims') {
+            attrs.linethickness = aboveDimStr || '0';
           }
           const frac = elem('mfrac', [num, denom], attrs);
           const result: (string | MathMLElement)[] = [];
-          if (leftDelim) result.push(elem('mo', [leftDelim], {}));
+          const delimSize = '2.047em';
+          if (leftDelim) result.push(elem('mrow', [
+            elem('mo', [leftDelim], { minsize: delimSize, maxsize: delimSize }),
+          ]));
           result.push(frac);
-          if (rightDelim) result.push(elem('mo', [rightDelim], {}));
-          return result.length === 1 ? frac : elem('mrow', result);
+          if (rightDelim) result.push(elem('mrow', [
+            elem('mo', [rightDelim], { minsize: delimSize, maxsize: delimSize }),
+          ]));
+          if (result.length === 1) return frac;
+          const wrapper = elem('mrow', result);
+          wrapper.meta[':fenced'] = true;
+          return wrapper;
+        }
+
+        // \above reads a dimension
+        let aboveDim = '';
+        if (t.name === 'above') {
+          this.skipSpaces();
+          while (true) {
+            const p = this.peek();
+            if (!p) break;
+            if (p.type === 'char') {
+              const v = (p as { type: 'char'; value: string }).value;
+              if (/[0-9.a-z]/.test(v)) {
+                aboveDim += v;
+                this.advance();
+                continue;
+              }
+            }
+            break;
+          }
         }
 
         const denom = this.parseExpression();
-        if (t.name === 'atop' || t.name === 'above') {
+        if (t.name === 'above') {
+          return elem('mfrac', [num, denom], { linethickness: aboveDim || '0' });
+        }
+        if (t.name === 'atop') {
           return elem('mfrac', [num, denom], { linethickness: '0' });
         }
         if (t.name === 'choose') {
-          return elem('mrow', [
-            elem('mo', ['('], {}),
+          const delimSize = '2.047em';
+          const result = elem('mrow', [
+            elem('mrow', [
+              elem('mo', ['('], { minsize: delimSize, maxsize: delimSize }),
+            ]),
             elem('mfrac', [num, denom], { linethickness: '0' }),
-            elem('mo', [')'], {}),
+            elem('mrow', [
+              elem('mo', [')'], { minsize: delimSize, maxsize: delimSize }),
+            ]),
           ]);
+          result.meta[':fenced'] = true;
+          return result;
         }
         return elem('mfrac', [num, denom]);
       }
@@ -878,13 +959,22 @@ class Parser {
 
   /** Collect consecutive prime characters into a single mo. */
   private collectPrimes(): MathMLElement | null {
-    let primes = '';
+    let count = 0;
     while (this.peek()?.type === 'char' &&
            (this.peek() as { type: 'char'; value: string }).value === '\u2032') {
-      primes += '\u2032';
+      count++;
       this.advance();
     }
-    return primes ? elem('mo', [primes]) : null;
+    if (count === 0) return null;
+    // Use combined prime Unicode characters
+    const primeChars: Record<number, string> = {
+      1: '\u2032',  // ′
+      2: '\u2033',  // ″
+      3: '\u2034',  // ‴
+      4: '\u2057',  // ⁗
+    };
+    const ch = primeChars[count] || '\u2032'.repeat(count);
+    return elem('mo', [ch]);
   }
 
   /** Parse an atomic expression (no sub/sup). */
@@ -951,9 +1041,9 @@ class Parser {
     if (ch === '-') {
       return elem('mo', ['\u2212']);
     }
-    // Fence characters: add stretchy="false" so they don't grow
+    // Stretchy characters: add stretchy="false" so they don't grow
     // unexpectedly inside an mrow (only \left/\right should stretch)
-    if ('()[]{}|'.includes(ch)) {
+    if (stretchyChars.has(ch)) {
       return elem('mo', [ch], { stretchy: 'false' });
     }
     // Everything else → mo
@@ -991,7 +1081,7 @@ class Parser {
     if (/[a-zA-Z]/.test(ch)) return elem('mi', [ch]);
     if (/[0-9]/.test(ch)) return elem('mn', [ch]);
     if (ch === '-') return elem('mo', ['\u2212']);
-    if ('()[]{}|'.includes(ch)) return elem('mo', [ch], { stretchy: 'false' });
+    if (stretchyChars.has(ch)) return elem('mo', [ch], { stretchy: 'false' });
     return elem('mo', [ch]);
   }
 
@@ -1212,7 +1302,8 @@ class Parser {
     // --- Text/font commands ---
 
     if (name === 'text' || name === 'textrm' || name === 'textit' ||
-        name === 'textbf' || name === 'textsf' || name === 'texttt')
+        name === 'textbf' || name === 'textsf' || name === 'texttt' ||
+        name === 'textup' || name === 'textnormal')
       return this.parseTextCommand(name);
 
     if (name in fontCommands)
@@ -1234,11 +1325,19 @@ class Parser {
     if (name === 'qquad') return elem('mspace', [], { width: '2em' });
     if (name === 'enspace') return elem('mspace', [], { width: '0.5em' });
 
+    // \iff: long double arrow with extra spacing
+    if (name === 'iff')
+      return elem('mrow', [
+        elem('mspace', [], { width: '0.278em' }),
+        elem('mo', ['\u27FA'], { stretchy: 'false' }),
+        elem('mspace', [], { width: '0.278em' }),
+      ]);
+
     // --- Special single-char commands ---
 
-    if (name === '{') return elem('mo', ['{'], { stretchy: 'false' });
-    if (name === '}') return elem('mo', ['}'], { stretchy: 'false' });
-    if (name === '|') return elem('mo', ['\u2016'], { stretchy: 'false' });
+    if (name === '{') return elem('mo', ['{'], { fence: 'false', stretchy: 'false' });
+    if (name === '}') return elem('mo', ['}'], { fence: 'false', stretchy: 'false' });
+    if (name === '|') return elem('mo', ['\u2016'], { fence: 'false', stretchy: 'false' });
     if (name === '%') return elem('mo', ['%']);
     if (name === '#') return elem('mo', ['#']);
     if (name === '&') return elem('mo', ['&']);
@@ -1250,8 +1349,14 @@ class Parser {
     if (operatorNames.has(name))
       return elem('mi', [name], {}, { ':applyfunction': true });
 
-    if (operatorNamesWithLimits.has(name))
-      return elem('mo', [name], { movablelimits: 'true' }, { ':limits': true });
+    if (operatorNamesWithLimits.has(name)) {
+      // Some operator names need spaces in the display text
+      const opDisplayNames: Record<string, string> = {
+        liminf: 'lim inf', limsup: 'lim sup',
+      };
+      const displayName = opDisplayNames[name] || name;
+      return elem('mo', [displayName], { movablelimits: 'true' }, { ':limits': true });
+    }
 
     // --- Symbol lookup ---
 
@@ -1266,10 +1371,15 @@ class Parser {
       if (bigOperators.has(name)) {
         return elem(sym.element, [sym.char], {}, { ':limits': true });
       }
-      // Fence characters get stretchy="false" so they don't grow
-      // unexpectedly (only \left/\right should stretch)
-      if (sym.element === 'mo' && '()[]{}|\u2016'.includes(sym.char)) {
-        return elem(sym.element, [sym.char], { stretchy: 'false' });
+      // Stretchy characters get stretchy="false" so they don't grow
+      // unexpectedly (only \left/\right should stretch).
+      // Fence characters also get fence="false" when used as plain symbols.
+      if (sym.element === 'mo' && stretchyChars.has(sym.char)) {
+        const attrs: Record<string, string> = { stretchy: 'false' };
+        if (fenceChars.has(sym.char)) attrs.fence = 'false';
+        // surd gets symmetric="true"
+        if (sym.char === '\u221A') attrs.symmetric = 'true';
+        return elem(sym.element, [sym.char], attrs);
       }
       return elem(sym.element, [sym.char]);
     }
@@ -1326,9 +1436,7 @@ class Parser {
     const leftDelim = this.readDelimiter();
     const items: (string | MathMLElement)[] = [];
 
-    if (leftDelim) {
-      items.push(elem('mo', [leftDelim]));
-    }
+    items.push(this.makeDelimElement(leftDelim));
 
     // Parse content until \right
     while (true) {
@@ -1343,9 +1451,12 @@ class Parser {
       if (t.type === 'command' && t.name === 'middle') {
         this.advance();
         const midDelim = this.readDelimiter();
+        // MathJax wraps \middle with empty <mrow></mrow> on each side
+        items.push(elem('mrow'));
         if (midDelim) {
           items.push(elem('mo', [midDelim], { stretchy: 'true' }));
         }
+        items.push(elem('mrow'));
         continue;
       }
       const item = this.parseItem();
@@ -1353,11 +1464,25 @@ class Parser {
     }
 
     const rightDelim = this.readDelimiter();
-    if (rightDelim) {
-      items.push(elem('mo', [rightDelim]));
-    }
+    items.push(this.makeDelimElement(rightDelim));
 
-    return elem('mrow', items);
+    const mrow = elem('mrow', items);
+    mrow.meta[':fenced'] = true;
+    return mrow;
+  }
+
+  /** Create a delimiter <mo> element for \left/\right context. */
+  private makeDelimElement(delim: string | null): MathMLElement {
+    if (!delim) {
+      // Invisible delimiter (\left. or \right.)
+      return elem('mo', [], { fence: 'true', stretchy: 'true', symmetric: 'true' });
+    }
+    // Non-fence characters (arrows etc.) get fence="true" symmetric="true"
+    if (!fenceChars.has(delim)) {
+      return elem('mo', [delim], { fence: 'true', symmetric: 'true' });
+    }
+    // Normal fence characters — bare <mo> is stretchy by default in mrow
+    return elem('mo', [delim]);
   }
 
   /** Read a delimiter token (used after \left, \right, \middle). */
@@ -1382,26 +1507,36 @@ class Parser {
       if (sym) return sym.char;
       throw new ParseError(`Unknown delimiter: \\${name}`);
     }
+    // Handle braced delimiter: {\{}, {\langle}, etc.
+    if (t.type === '{') {
+      this.advance();
+      const inner = this.readDelimiter();
+      this.expect('}');
+      return inner;
+    }
     throw new ParseError('Expected delimiter');
   }
 
   private parseBigDelim(name: string): MathMLElement {
     // Size map: big=1.2em, Big=1.8em, bigg=2.4em, Bigg=3em
+    // MathJax uses slightly different sizes: 1.2, 1.623, 2.047, 2.470
     const sizeMap: Record<string, string> = {
-      big: '1.2em', Big: '1.8em', bigg: '2.4em', Bigg: '3em',
+      big: '1.2em', Big: '1.623em', bigg: '2.047em', Bigg: '2.470em',
     };
     const base = name.replace(/^(big|Big|bigg|Bigg)[lrm]?$/, '$1');
     const size = sizeMap[base] || '1.2em';
     const suffix = name.slice(base.length); // 'l', 'r', 'm', or ''
-    const fence = suffix === 'l' || suffix === 'r';
     const delim = this.readDelimiter();
     if (!delim) return elem('mo');
-    return elem('mo', [delim], {
-      fence: fence ? 'true' : 'false',
+    const moEl = elem('mo', [delim], {
+      fence: 'true',
       stretchy: 'true',
+      symmetric: 'true',
       minsize: size,
       maxsize: size,
     });
+    // MathJax wraps \big in <mrow>
+    return elem('mrow', [moEl]);
   }
 
   private parseBinom(variant: string): MathMLElement {
@@ -1481,23 +1616,51 @@ class Parser {
         '=': '\u2260',
         '<': '\u226E',
         '>': '\u226F',
-        '\u2208': '\u2209',
-        '\u2282': '\u2284',
-        '\u2283': '\u2285',
-        '\u2286': '\u2288',
-        '\u2287': '\u2289',
-        '\u2261': '\u2262',
-        '\u223C': '\u2241',
-        '\u2248': '\u2249',
+        '\u2208': '\u2209',     // ∈ → ∉
+        '\u2282': '\u2284',     // ⊂ → ⊄
+        '\u2283': '\u2285',     // ⊃ → ⊅
+        '\u2286': '\u2288',     // ⊆ → ⊈
+        '\u2287': '\u2289',     // ⊇ → ⊉
+        '\u2261': '\u2262',     // ≡ → ≢
+        '\u223C': '\u2241',     // ∼ → ≁
+        '\u2248': '\u2249',     // ≈ → ≉
+        '\u2264': '\u2270',     // ≤ → ≰
+        '\u2265': '\u2271',     // ≥ → ≱
+        '\u227A': '\u2280',     // ≺ → ⊀
+        '\u227B': '\u2281',     // ≻ → ⊁
+        '\u2190': '\u219A',     // ← → ↚
+        '\u2192': '\u219B',     // → → ↛
+        '\u21D0': '\u21CD',     // ⇐ → ⇍
+        '\u21D2': '\u21CF',     // ⇒ → ⇏
+        '\u2194': '\u21AE',     // ↔ → ↮
+        '\u21D4': '\u21CE',     // ⇔ → ⇎
+        '\u22A2': '\u22AC',     // ⊢ → ⊬
+        '\u22A8': '\u22AD',     // ⊨ → ⊭
+        '\u22A9': '\u22AE',     // ⊩ → ⊮
+        '\u2223': '\u2224',     // ∣ → ∤
+        '\u2225': '\u2226',     // ∥ → ∦
+        '\u27F6': '\u27F6\u0338', // ⟶ → ⟶̸ (long right arrow)
+        '\u27F5': '\u27F5\u0338', // ⟵ → ⟵̸ (long left arrow)
       };
       if (negMap[ch]) {
         next.children[0] = negMap[ch];
+        // Negated arrows that aren't standard fence chars get stretchy="false"
+        if (stretchyChars.has(negMap[ch])) {
+          next.attrs.stretchy = 'false';
+        }
         return next;
       }
-      // Fallback: overlay with combining /
-      return elem('mrow', [next, elem('mo', ['\u0338'])]);
+      // Fallback: overlay with slash using mpadded
+      return elem('mrow', [
+        elem('mpadded', [elem('mtext', ['\u29F8'])], { width: '0' }),
+      ]);
     }
-    if (next) return next;
+    // Fallback for non-mo next or empty
+    if (next) {
+      return elem('mrow', [
+        elem('mpadded', [elem('mtext', ['\u29F8'])], { width: '0' }),
+      ]);
+    }
     return elem('mo', ['\u00AC']);
   }
 
@@ -1668,7 +1831,8 @@ class Parser {
     const stretchy = wideAccents.has(name);
     const isDecoration = nonAccentDecorations.has(name);
     const moAttrs: Record<string, string> = {};
-    if (stretchy) moAttrs.stretchy = 'true';
+    // Non-wide accents (hat, tilde, etc.) need stretchy="false" to prevent
+    // stretching. Wide accents (overline, overbrace, etc.) stretch by default.
     if (!stretchy) moAttrs.stretchy = 'false';
     if (!isDecoration) moAttrs.accent = 'true';
     const accentMo = elem('mo', [def.char], moAttrs);
@@ -2942,9 +3106,9 @@ function getStyleAttrs(name: string): Record<string, string | number | boolean |
   }
   switch (name) {
     case 'displaystyle':
-      return { displaystyle: 'true', scriptlevel: '0' };
+      return { displaystyle: 'true' };
     case 'textstyle':
-      return { displaystyle: 'false', scriptlevel: '0' };
+      return { displaystyle: 'false' };
     case 'scriptstyle':
       return { displaystyle: 'false', scriptlevel: '1' };
     case 'scriptscriptstyle':
@@ -2983,7 +3147,11 @@ export function render(input: string, options: RenderOptions = {}): MathMLElemen
   const parser = new Parser(expander);
   const body = parser.parseExpression();
 
-  const math = elem('math', body.tag === 'mrow' ? body.children : [body], {
+  // Unwrap the top-level mrow only if it's the implicit one from parseExpression
+  // (multiple children, not from \left/\right or other semantic constructs).
+  const children = (body.tag === 'mrow' && body.children.length > 1 && !body.meta[':fenced'])
+    ? body.children : [body];
+  const math = elem('math', children, {
     xmlns: 'http://www.w3.org/1998/Math/MathML',
   });
   if (options.displayMode) {

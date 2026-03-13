@@ -134,7 +134,7 @@ export const symbols: Record<string, SymbolDef> = {
   Leftarrow:        { char: '\u21D0', element: 'mo' },
   impliedby:        { char: '\u21D0', element: 'mo' },
   Leftrightarrow:   { char: '\u21D4', element: 'mo' },
-  iff:              { char: '\u21D4', element: 'mo' },
+  iff:              { char: '\u27FA', element: 'mo' },
   uparrow:          { char: '\u2191', element: 'mo' },
   downarrow:        { char: '\u2193', element: 'mo' },
   updownarrow:      { char: '\u2195', element: 'mo' },
@@ -356,7 +356,36 @@ export const symbols: Record<string, SymbolDef> = {
   diagdown:           { char: '\u2572', element: 'mo' },
   maltese:            { char: '\u2720', element: 'mo' },
 
+  // Classic TeX binary operators
+  bigtriangleup:      { char: '\u25B3', element: 'mo' },
+  bigtriangledown:    { char: '\u25BD', element: 'mo' },
+  sqcap:              { char: '\u2293', element: 'mo' },
+  sqcup:              { char: '\u2294', element: 'mo' },
+  uplus:              { char: '\u228E', element: 'mo' },
+  diamond:            { char: '\u22C4', element: 'mo' },
+  bigcirc:            { char: '\u25EF', element: 'mo' },
+
+  // Classic TeX relations
+  owns:               { char: '\u220B', element: 'mo' },
+  bowtie:             { char: '\u22C8', element: 'mo' },
+
+  // Additional delimiter-like
+  arrowvert:          { char: '|', element: 'mo' },
+  bracevert:          { char: '|', element: 'mo' },
+  Arrowvert:          { char: '\u2016', element: 'mo' },
+
+  // Misc missing symbols
+  omicron:            { char: 'o', element: 'mi' },
+  colon:              { char: ':', element: 'mo' },
+  iddots:             { char: '\u22F0', element: 'mo' },
+  AA:                 { char: '\u00C5', element: 'mi' },
+  S:                  { char: '\u00A7', element: 'mo' },
+
   // Additional integrals
+  intop:              { char: '\u222B', element: 'mo' },
+  ointop:             { char: '\u222E', element: 'mo' },
+  oiint:              { char: '\u222F', element: 'mo' },
+  oiiint:             { char: '\u2230', element: 'mo' },
   smallint:           { char: '\u222B', element: 'mo' },
   iiiint:             { char: '\u2A0C', element: 'mo' },
   idotsint:           { char: '\u222B\u22EF\u222B', element: 'mo' },
@@ -372,6 +401,13 @@ export const symbols: Record<string, SymbolDef> = {
   vdots:  { char: '\u22EE', element: 'mo' },
   ddots:  { char: '\u22F1', element: 'mo' },
   dots:   { char: '\u2026', element: 'mo' },
+  dotsc:  { char: '\u2026', element: 'mo' },
+  dotsb:  { char: '\u22EF', element: 'mo' },
+  dotsm:  { char: '\u22EF', element: 'mo' },
+  dotsi:  { char: '\u22EF', element: 'mo' },
+  dotso:  { char: '\u2026', element: 'mo' },
+  ldotp:  { char: '.', element: 'mo' },
+  cdotp:  { char: '\u22C5', element: 'mo' },
 
   // Delimiter symbols (when not used with \left/\right)
   langle:   { char: '\u27E8', element: 'mo' },
@@ -494,6 +530,8 @@ export const delimiters: Record<string, string> = {
   '.': '',   // invisible delimiter
   '/': '/',
   '\\': '\\',
+  '<': '\u27E8',
+  '>': '\u27E9',
   langle: '\u27E8',
   rangle: '\u27E9',
   lfloor: '\u230A',
@@ -547,4 +585,39 @@ export const fontCommands: Record<string, string> = {
   frak: 'fraktur',
   mathnormal: 'italic',
   mathsfit: 'sans-serif-italic',
+  // Unicode math / additional font commands
+  mathup: 'normal',
+  mathbfup: 'bold',
+  mathbfit: 'bold-italic',
+  mathbffrak: 'bold-fraktur',
+  mathbfscr: 'bold-script',
+  mathsfup: 'sans-serif',
+  mathbfsf: 'bold-sans-serif',
+  mathbfsfup: 'bold-sans-serif',
+  mathbfsfit: 'bold-sans-serif-italic',
+  mathbfcal: 'bold-script',
+  mit: 'italic',
+  oldstyle: 'normal',
+  // sym* commands (same as math* but different names)
+  symrm: 'normal',
+  symup: 'normal',
+  symnormal: 'normal',
+  symbf: 'bold',
+  symbfup: 'bold',
+  symit: 'italic',
+  symbfit: 'bold-italic',
+  symbb: 'double-struck',
+  symfrak: 'fraktur',
+  symbffrak: 'bold-fraktur',
+  symscr: 'script',
+  symbfscr: 'bold-script',
+  symsf: 'sans-serif',
+  symsfup: 'sans-serif',
+  symbfsf: 'bold-sans-serif',
+  symbfsfup: 'bold-sans-serif',
+  symsfit: 'sans-serif-italic',
+  symbfsfit: 'bold-sans-serif-italic',
+  symtt: 'monospace',
+  symcal: 'script',
+  symbfcal: 'bold-script',
 };

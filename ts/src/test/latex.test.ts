@@ -155,28 +155,38 @@ describe('LaTeX parser', () => {
 
   describe('delimiters', () => {
     it('parses \\left( ... \\right)', () => {
-      // Bare <mo> delimiters (matching MathJax — no explicit fence/stretchy attrs)
-      const children = renderInner('\\left( x \\right)');
-      assert.equal(children.length, 3); // mo( + mi(x) + mo)
-      assert.equal(children[0].tag, 'mo');
-      assert.deepEqual(children[0].children, ['(']);
+      // \left...\right produces a fenced <mrow>
+      const el = renderSingle('\\left( x \\right)');
+      assert.equal(el.tag, 'mrow');
+      const mos = (el.children as MathMLElement[]).filter(c => typeof c !== 'string' && c.tag === 'mo');
+      assert.equal(mos.length, 2); // ( and )
+      assert.deepEqual(mos[0].children, ['(']);
+      assert.deepEqual(mos[1].children, [')']);
     });
 
     it('handles invisible delimiter with .', () => {
-      const children = renderInner('\\left. x \\right|');
-      // No left delimiter, just content and right |
-      assert.ok(children.some(c => c.tag === 'mo' && c.children[0] === '|'));
+      const el = renderSingle('\\left. x \\right|');
+      assert.equal(el.tag, 'mrow');
+      // First child: invisible delimiter (empty mo with fence/stretchy attrs)
+      const first = (el.children as MathMLElement[])[0];
+      assert.equal(first.tag, 'mo');
+      assert.deepEqual(first.children, []);
+      // Last child: |
+      const last = (el.children as MathMLElement[]).at(-1);
+      assert.ok(last && last.tag === 'mo' && last.children[0] === '|');
     });
 
     it('handles \\left\\{ ... \\right\\}', () => {
-      const children = renderInner('\\left\\{ x \\right\\}');
-      assert.equal(children.length, 3);
-      assert.deepEqual(children[0].children, ['{']);
+      const el = renderSingle('\\left\\{ x \\right\\}');
+      assert.equal(el.tag, 'mrow');
+      const first = (el.children as MathMLElement[])[0];
+      assert.deepEqual(first.children, ['{']);
     });
 
     it('handles \\middle', () => {
-      const children = renderInner('\\left( x \\middle| y \\right)');
-      const mos = children.filter(c => c.tag === 'mo');
+      const el = renderSingle('\\left( x \\middle| y \\right)');
+      assert.equal(el.tag, 'mrow');
+      const mos = (el.children as MathMLElement[]).filter(c => typeof c !== 'string' && c.tag === 'mo');
       assert.equal(mos.length, 3); // (, |, )
     });
   });
@@ -269,7 +279,10 @@ describe('LaTeX parser', () => {
       const el = renderSingle('\\overline{AB}');
       assert.equal(el.tag, 'mover');
       const accent = el.children[1] as MathMLElement;
-      assert.equal(accent.attrs.stretchy, 'true');
+      assert.equal(accent.tag, 'mo');
+      assert.equal(accent.attrs.accent, 'true');
+      // Wide accents don't need explicit stretchy="true" (it's the default)
+      assert.equal(accent.attrs.stretchy, undefined);
     });
 
     it('parses \\underline', () => {
@@ -397,13 +410,14 @@ describe('LaTeX parser', () => {
     });
 
     it('expands macros with arguments', () => {
-      const children = renderInner('\\norm{x}', {
+      const el = renderSingle('\\norm{x}', {
         macros: {
           '\\norm': { args: 1, expansion: '\\left\\| #1 \\right\\|' },
         },
       });
-      // \left\| x \right\| → ‖ x ‖
-      const mos = children.filter(c => c.tag === 'mo');
+      // \left\| x \right\| → mrow with ‖ x ‖
+      assert.equal(el.tag, 'mrow');
+      const mos = (el.children as MathMLElement[]).filter(c => typeof c !== 'string' && c.tag === 'mo');
       assert.ok(mos.length >= 2); // at least two ‖ delimiters
     });
 
@@ -662,8 +676,10 @@ describe('LaTeX parser', () => {
     });
 
     it('handles \\atopwithdelims as infix', () => {
-      const children = renderInner('{n \\atopwithdelims() k}');
-      const frac = children.find(c => c.tag === 'mfrac');
+      const el = renderSingle('{n \\atopwithdelims() k}');
+      // Result is mrow with delimiters wrapping a mfrac
+      assert.equal(el.tag, 'mrow');
+      const frac = (el.children as MathMLElement[]).find(c => typeof c !== 'string' && c.tag === 'mfrac');
       assert.ok(frac, 'should contain mfrac');
     });
   });
