@@ -486,7 +486,7 @@ describe('LaTeX parser', () => {
       const str = renderToString(
         '\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad - bc'
       );
-      assert.ok(str.includes('<mtable>'));
+      assert.ok(str.includes('<mtable'));
       assert.ok(str.includes('<mtr>'));
       assert.ok(str.includes('<mtd>'));
     });

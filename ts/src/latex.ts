@@ -929,6 +929,11 @@ class Parser {
       if (t?.type === '_' && !sub) {
         this.advance();
         sub = this.parseArgSingle();
+        // Collect primes after subscript: f_0' → f_0^′
+        if (!sup) {
+          const postPrimes = this.collectPrimes();
+          if (postPrimes) sup = postPrimes;
+        }
       } else if (t?.type === '^' && !sup) {
         this.advance();
         sup = this.parseArgSingle();
@@ -1193,7 +1198,7 @@ class Parser {
     if (name === 'mod')
       return this.parseMod();
     if (name === 'bmod')
-      return elem('mo', ['mod']);
+      return elem('mo', ['mod'], { lspace: 'thickmathspace', rspace: 'thickmathspace' });
 
     // --- Cancel ---
 
@@ -1621,9 +1626,11 @@ class Parser {
 
   private parseOperatorname(): MathMLElement {
     // Check for \operatorname* (limits variant)
+    let isLimits = false;
     const star = this.peek();
     if (star?.type === 'char' && (star as { type: 'char'; value: string }).value === '*') {
       this.advance();
+      isLimits = true;
     }
     this.expect('{');
     let name = '';
@@ -1636,7 +1643,11 @@ class Parser {
       else if (t.type === 'command') name += (t as { type: 'command'; name: string }).name;
     }
     this.expect('}');
-    return elem('mi', [name]);
+    const el = elem('mi', [name]);
+    if (isLimits && this.displayMode) {
+      el.meta[':limits'] = true;
+    }
+    return el;
   }
 
   private parseNot(): MathMLElement {
@@ -1996,7 +2007,7 @@ class Parser {
 
   private parseMatrix(envName: string, [leftDelim, rightDelim]: [string, string]): MathMLElement {
     const rows = this.parseTableRows(envName);
-    const mtable = elem('mtable', rows);
+    const mtable = elem('mtable', rows, { columnspacing: '1em', rowspacing: '4pt' });
 
     if (leftDelim || rightDelim) {
       const items: (string | MathMLElement)[] = [];
@@ -2014,10 +2025,15 @@ class Parser {
 
   private parseCases(): MathMLElement {
     const rows = this.parseTableRows('cases');
-    const mtable = elem('mtable', rows, { columnalign: 'left left' });
+    const mtable = elem('mtable', rows, {
+      columnalign: 'left left',
+      columnspacing: '1em',
+      rowspacing: '.2em',
+    });
     return elem('mrow', [
-      elem('mo', ['{'], {}),
+      elem('mo', ['{'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
       mtable,
+      elem('mo', [], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
     ]);
   }
 
@@ -2115,10 +2131,15 @@ class Parser {
   /** Parse \cases{...} command (MathJax-style). */
   private parseCasesCommand(): MathMLElement {
     const rows = this.parseBracedTableRows();
-    const mtable = elem('mtable', rows, { columnalign: 'left left' });
+    const mtable = elem('mtable', rows, {
+      columnalign: 'left left',
+      columnspacing: '1em',
+      rowspacing: '.2em',
+    });
     return elem('mrow', [
-      elem('mo', ['{'], {}),
+      elem('mo', ['{'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
       mtable,
+      elem('mo', [], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
     ]);
   }
 
@@ -2375,12 +2396,12 @@ class Parser {
   private parsePmod(): MathMLElement {
     const body = this.parseArgSingle();
     return elem('mrow', [
-      elem('mspace', [], { width: '1em' }),
-      elem('mo', ['(']),
+      elem('mspace', [], { width: '0.444em' }),
+      elem('mo', ['('], { stretchy: 'false' }),
       elem('mi', ['mod']),
       elem('mspace', [], { width: '0.333em' }),
       body,
-      elem('mo', [')']),
+      elem('mo', [')'], { stretchy: 'false' }),
     ]);
   }
 
@@ -2388,10 +2409,10 @@ class Parser {
   private parsePod(): MathMLElement {
     const body = this.parseArgSingle();
     return elem('mrow', [
-      elem('mspace', [], { width: '1em' }),
-      elem('mo', ['(']),
+      elem('mspace', [], { width: '0.444em' }),
+      elem('mo', ['('], { stretchy: 'false' }),
       body,
-      elem('mo', [')']),
+      elem('mo', [')'], { stretchy: 'false' }),
     ]);
   }
 
@@ -2809,10 +2830,15 @@ class Parser {
   /** Parse rcases environment. */
   private parseRcases(): MathMLElement {
     const rows = this.parseTableRows('rcases');
-    const mtable = elem('mtable', rows, { columnalign: 'left left' });
+    const mtable = elem('mtable', rows, {
+      columnalign: 'left left',
+      columnspacing: '1em',
+      rowspacing: '.2em',
+    });
     return elem('mrow', [
+      elem('mo', [], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
       mtable,
-      elem('mo', ['}'], {}),
+      elem('mo', ['}'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
     ]);
   }
 
