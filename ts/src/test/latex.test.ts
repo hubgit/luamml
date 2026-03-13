@@ -155,11 +155,11 @@ describe('LaTeX parser', () => {
 
   describe('delimiters', () => {
     it('parses \\left( ... \\right)', () => {
-      // <math> acts as implicit mrow, so children are spliced in
+      // Bare <mo> delimiters (matching MathJax — no explicit fence/stretchy attrs)
       const children = renderInner('\\left( x \\right)');
       assert.equal(children.length, 3); // mo( + mi(x) + mo)
       assert.equal(children[0].tag, 'mo');
-      assert.equal(children[0].attrs.fence, 'true');
+      assert.deepEqual(children[0].children, ['(']);
     });
 
     it('handles invisible delimiter with .', () => {

@@ -402,7 +402,7 @@ export const accents: Record<string, AccentDef> = {
   tilde:      { char: '\u0303', over: true },
   widetilde:  { char: '\u0303', over: true },
   bar:        { char: '\u0304', over: true },
-  overline:   { char: '\u0305', over: true },
+  overline:   { char: '\u2015', over: true },
   vec:        { char: '\u2192', over: true },
   overrightarrow: { char: '\u2192', over: true },
   overleftarrow:  { char: '\u2190', over: true },
@@ -419,7 +419,7 @@ export const accents: Record<string, AccentDef> = {
   acute:      { char: '\u00B4', over: true },
   grave:      { char: '\u0060', over: true },
   mathring:   { char: '\u02DA', over: true },
-  underline:  { char: '\u0332', over: false },
+  underline:  { char: '\u2015', over: false },
   underbrace: { char: '\u23DF', over: false },
   overbrace:  { char: '\u23DE', over: true },
   overparen:  { char: '\u23DC', over: true },
@@ -451,6 +451,11 @@ export const wideAccents = new Set([
 export const nonAccentDecorations = new Set([
   'overbrace', 'underbrace', 'overparen', 'underparen',
   'overbracket', 'underbracket',
+  // Wide arrow accents — MathJax treats these as non-accent decorations
+  'overrightarrow', 'overleftarrow', 'overleftrightarrow',
+  'underrightarrow', 'underleftarrow', 'underleftrightarrow',
+  'Overrightarrow', 'overgroup', 'undergroup',
+  'overlinesegment', 'overleftharpoon', 'overrightharpoon',
 ]);
 
 /** Named math operators (upright, no limits by default). */

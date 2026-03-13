@@ -715,9 +715,9 @@ class Parser {
         // Append tag as parenthesized label
         items.push(elem('mrow', [
           elem('mspace', [], { width: '2em' }),
-          elem('mo', ['('], { fence: 'true' }),
+          elem('mo', ['(']),
           tagContent,
-          elem('mo', [')'], { fence: 'true' }),
+          elem('mo', [')']),
         ]));
         continue;
       }
@@ -743,9 +743,9 @@ class Parser {
           }
           const frac = elem('mfrac', [num, denom], attrs);
           const result: (string | MathMLElement)[] = [];
-          if (leftDelim) result.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+          if (leftDelim) result.push(elem('mo', [leftDelim], {}));
           result.push(frac);
-          if (rightDelim) result.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+          if (rightDelim) result.push(elem('mo', [rightDelim], {}));
           return result.length === 1 ? frac : elem('mrow', result);
         }
 
@@ -755,9 +755,9 @@ class Parser {
         }
         if (t.name === 'choose') {
           return elem('mrow', [
-            elem('mo', ['('], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+            elem('mo', ['('], {}),
             elem('mfrac', [num, denom], { linethickness: '0' }),
-            elem('mo', [')'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+            elem('mo', [')'], {}),
           ]);
         }
         return elem('mfrac', [num, denom]);
@@ -809,6 +809,22 @@ class Parser {
       }
     }
 
+    // Handle \limits / \nolimits modifiers
+    let limitsOverride: boolean | null = null;
+    while (true) {
+      this.skipSpaces();
+      const t = this.peek();
+      if (t?.type === 'command' && t.name === 'limits') {
+        this.advance();
+        limitsOverride = true;
+      } else if (t?.type === 'command' && t.name === 'nolimits') {
+        this.advance();
+        limitsOverride = false;
+      } else {
+        break;
+      }
+    }
+
     let sub: MathMLElement | null = null;
     let sup: MathMLElement | null = null;
 
@@ -838,8 +854,17 @@ class Parser {
       }
     }
 
-    // Big operators and named limits use munderover/munder/mover
-    const useLimits = base.meta[':limits'] === true;
+    // Determine limits placement: \limits/\nolimits override, then default from base
+    const defaultLimits = base.meta[':limits'] === true;
+    const useLimits = limitsOverride !== null ? limitsOverride : defaultLimits;
+
+    // When \limits forces under/over on an operator that defaults to sub/sup,
+    // add movablelimits="false" to prevent the browser from moving them back.
+    // When \nolimits forces sub/sup on a default-limits operator, also mark it.
+    if (limitsOverride !== null && limitsOverride !== defaultLimits &&
+        base.tag === 'mo') {
+      base.attrs.movablelimits = 'false';
+    }
     const applyFn = base.meta[':applyfunction'] === true;
     let result: MathMLElement;
     if (sub && sup) result = elem(useLimits ? 'munderover' : 'msubsup', [base, sub, sup]);
@@ -987,6 +1012,8 @@ class Parser {
       return this.parseOverUnderSet('munder');
     if (name === 'stackrel')
       return this.parseOverUnderSet('mover');
+    if (name === 'overunderset')
+      return this.parseOverUnderset();
     if (name === 'operatorname')
       return this.parseOperatorname();
     if (name === 'begin')
@@ -1289,7 +1316,7 @@ class Parser {
     const items: (string | MathMLElement)[] = [];
 
     if (leftDelim) {
-      items.push(elem('mo', [leftDelim], { stretchy: 'true', fence: 'true', symmetric: 'true' }));
+      items.push(elem('mo', [leftDelim]));
     }
 
     // Parse content until \right
@@ -1306,7 +1333,7 @@ class Parser {
         this.advance();
         const midDelim = this.readDelimiter();
         if (midDelim) {
-          items.push(elem('mo', [midDelim], { stretchy: 'true', fence: 'true', symmetric: 'true' }));
+          items.push(elem('mo', [midDelim], { stretchy: 'true' }));
         }
         continue;
       }
@@ -1316,7 +1343,7 @@ class Parser {
 
     const rightDelim = this.readDelimiter();
     if (rightDelim) {
-      items.push(elem('mo', [rightDelim], { stretchy: 'true', fence: 'true', symmetric: 'true' }));
+      items.push(elem('mo', [rightDelim]));
     }
 
     return elem('mrow', items);
@@ -1370,9 +1397,9 @@ class Parser {
     const n = this.parseArgSingle();
     const k = this.parseArgSingle();
     const inner = elem('mrow', [
-      elem('mo', ['('], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+      elem('mo', ['('], {}),
       elem('mfrac', [n, k], { linethickness: '0' }),
-      elem('mo', [')'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+      elem('mo', [')'], {}),
     ]);
     if (variant === 'dbinom') {
       return elem('mstyle', [inner], { displaystyle: 'true', scriptlevel: '0' });
@@ -1386,7 +1413,31 @@ class Parser {
   private parseOverUnderSet(tag: 'mover' | 'munder'): MathMLElement {
     const annotation = this.parseArgSingle();
     const base = this.parseArgSingle();
-    return elem(tag, [base, annotation]);
+    // MathJax only adds accent when annotation is a single <mo> (operator symbol)
+    const attrs: Record<string, string> = {};
+    if (annotation.tag === 'mo') {
+      if (tag === 'mover') attrs.accent = 'true';
+      else attrs.accentunder = 'true';
+      annotation.attrs.stretchy = 'false';
+    }
+    return elem(tag, [base, annotation], attrs);
+  }
+
+  /** Parse \overunderset{over}{under}{base}. */
+  private parseOverUnderset(): MathMLElement {
+    const over = this.parseArgSingle();
+    const under = this.parseArgSingle();
+    const base = this.parseArgSingle();
+    const attrs: Record<string, string> = {};
+    if (over.tag === 'mo') {
+      attrs.accent = 'true';
+      over.attrs.stretchy = 'false';
+    }
+    if (under.tag === 'mo') {
+      attrs.accentunder = 'true';
+      under.attrs.stretchy = 'false';
+    }
+    return elem('munderover', [base, under, over], attrs);
   }
 
   private parseOperatorname(): MathMLElement {
@@ -1611,6 +1662,11 @@ class Parser {
     if (!isDecoration) moAttrs.accent = 'true';
     const accentMo = elem('mo', [def.char], moAttrs);
     const tag = def.over ? 'mover' : 'munder';
+    // MathJax sets movablelimits="false" on big operators inside accents
+    // to prevent the browser from converting under/over to sub/sup
+    if (body.tag === 'mo' && body.meta[':limits']) {
+      body.attrs.movablelimits = 'false';
+    }
     const meta: Record<string, unknown> = {};
     if (isDecoration) {
       meta[':limits'] = true;
@@ -1719,11 +1775,11 @@ class Parser {
     if (leftDelim || rightDelim) {
       const items: (string | MathMLElement)[] = [];
       if (leftDelim) {
-        items.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+        items.push(elem('mo', [leftDelim], {}));
       }
       items.push(mtable);
       if (rightDelim) {
-        items.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+        items.push(elem('mo', [rightDelim], {}));
       }
       return elem('mrow', items);
     }
@@ -1734,7 +1790,7 @@ class Parser {
     const rows = this.parseTableRows('cases');
     const mtable = elem('mtable', rows, { columnalign: 'left left' });
     return elem('mrow', [
-      elem('mo', ['{'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+      elem('mo', ['{'], {}),
       mtable,
     ]);
   }
@@ -1835,7 +1891,7 @@ class Parser {
     const rows = this.parseBracedTableRows();
     const mtable = elem('mtable', rows, { columnalign: 'left left' });
     return elem('mrow', [
-      elem('mo', ['{'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+      elem('mo', ['{'], {}),
       mtable,
     ]);
   }
@@ -1865,10 +1921,10 @@ class Parser {
     if (leftDelim || rightDelim) {
       const items: (string | MathMLElement)[] = [];
       if (leftDelim)
-        items.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+        items.push(elem('mo', [leftDelim], {}));
       items.push(mtable);
       if (rightDelim)
-        items.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+        items.push(elem('mo', [rightDelim], {}));
       return elem('mrow', items);
     }
     return mtable;
@@ -2081,9 +2137,9 @@ class Parser {
 
     if (leftDelim || rightDelim) {
       const items: (string | MathMLElement)[] = [];
-      if (leftDelim) items.push(elem('mo', [leftDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+      if (leftDelim) items.push(elem('mo', [leftDelim], {}));
       items.push(frac);
-      if (rightDelim) items.push(elem('mo', [rightDelim], { fence: 'true', stretchy: 'true', symmetric: 'true' }));
+      if (rightDelim) items.push(elem('mo', [rightDelim], {}));
       return elem('mrow', items);
     }
     return frac;
@@ -2094,11 +2150,11 @@ class Parser {
     const body = this.parseArgSingle();
     return elem('mrow', [
       elem('mspace', [], { width: '1em' }),
-      elem('mo', ['('], { fence: 'true' }),
+      elem('mo', ['(']),
       elem('mi', ['mod']),
       elem('mspace', [], { width: '0.333em' }),
       body,
-      elem('mo', [')'], { fence: 'true' }),
+      elem('mo', [')']),
     ]);
   }
 
@@ -2107,9 +2163,9 @@ class Parser {
     const body = this.parseArgSingle();
     return elem('mrow', [
       elem('mspace', [], { width: '1em' }),
-      elem('mo', ['('], { fence: 'true' }),
+      elem('mo', ['(']),
       body,
-      elem('mo', [')'], { fence: 'true' }),
+      elem('mo', [')']),
     ]);
   }
 
@@ -2517,7 +2573,7 @@ class Parser {
     const mtable = elem('mtable', rows, { columnalign: 'left left' });
     return elem('mrow', [
       mtable,
-      elem('mo', ['}'], { fence: 'true', stretchy: 'true', symmetric: 'true' }),
+      elem('mo', ['}'], {}),
     ]);
   }
 
@@ -2635,16 +2691,16 @@ class Parser {
     const content = this.parseGroup();
     if (variant === 'bra') {
       return elem('mrow', [
-        elem('mo', ['\u27E8'], { stretchy: 'true', fence: 'true' }),
+        elem('mo', ['\u27E8'], {}),
         content,
-        elem('mo', ['|'], { stretchy: 'true', fence: 'true' }),
+        elem('mo', ['|'], {}),
       ]);
     }
     if (variant === 'ket') {
       return elem('mrow', [
-        elem('mo', ['|'], { stretchy: 'true', fence: 'true' }),
+        elem('mo', ['|'], {}),
         content,
-        elem('mo', ['\u27E9'], { stretchy: 'true', fence: 'true' }),
+        elem('mo', ['\u27E9'], {}),
       ]);
     }
     // braket or Braket: split on | to get phi|psi
@@ -2662,11 +2718,11 @@ class Parser {
       }
     }
     const result: Array<string | MathMLElement> = [
-      elem('mo', ['\u27E8'], { stretchy: 'true', fence: 'true' }),
+      elem('mo', ['\u27E8'], {}),
     ];
     for (let i = 0; i < parts.length; i++) {
       if (i > 0) {
-        result.push(elem('mo', ['|'], { stretchy: 'true', fence: 'true' }));
+        result.push(elem('mo', ['|'], {}));
       }
       if (parts[i].length === 1) {
         result.push(parts[i][0]);
@@ -2674,7 +2730,7 @@ class Parser {
         result.push(elem('mrow', parts[i]));
       }
     }
-    result.push(elem('mo', ['\u27E9'], { stretchy: 'true', fence: 'true' }));
+    result.push(elem('mo', ['\u27E9'], {}));
     return elem('mrow', result);
   }
 
@@ -2691,7 +2747,7 @@ class Parser {
       }
     }
     const result: Array<string | MathMLElement> = [
-      elem('mo', ['{'], { stretchy: 'true', fence: 'true' }),
+      elem('mo', ['{'], {}),
     ];
     for (let i = 0; i < parts.length; i++) {
       if (i > 0) {
@@ -2703,7 +2759,7 @@ class Parser {
         result.push(elem('mrow', parts[i]));
       }
     }
-    result.push(elem('mo', ['}'], { stretchy: 'true', fence: 'true' }));
+    result.push(elem('mo', ['}'], {}));
     return elem('mrow', result);
   }
 
@@ -2719,9 +2775,9 @@ class Parser {
       left = '('; right = ')';
     }
     return elem('mrow', [
-      elem('mo', [left], { stretchy: 'true', fence: 'true' }),
+      elem('mo', [left], {}),
       content,
-      elem('mo', [right], { stretchy: 'true', fence: 'true' }),
+      elem('mo', [right], {}),
     ]);
   }
 
