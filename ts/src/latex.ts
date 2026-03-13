@@ -951,6 +951,11 @@ class Parser {
     if (ch === '-') {
       return elem('mo', ['\u2212']);
     }
+    // Fence characters: add stretchy="false" so they don't grow
+    // unexpectedly inside an mrow (only \left/\right should stretch)
+    if ('()[]{}|'.includes(ch)) {
+      return elem('mo', [ch], { stretchy: 'false' });
+    }
     // Everything else → mo
     return elem('mo', [ch]);
   }
@@ -986,6 +991,7 @@ class Parser {
     if (/[a-zA-Z]/.test(ch)) return elem('mi', [ch]);
     if (/[0-9]/.test(ch)) return elem('mn', [ch]);
     if (ch === '-') return elem('mo', ['\u2212']);
+    if ('()[]{}|'.includes(ch)) return elem('mo', [ch], { stretchy: 'false' });
     return elem('mo', [ch]);
   }
 
@@ -1230,9 +1236,9 @@ class Parser {
 
     // --- Special single-char commands ---
 
-    if (name === '{') return elem('mo', ['{']);
-    if (name === '}') return elem('mo', ['}']);
-    if (name === '|') return elem('mo', ['\u2016']);
+    if (name === '{') return elem('mo', ['{'], { stretchy: 'false' });
+    if (name === '}') return elem('mo', ['}'], { stretchy: 'false' });
+    if (name === '|') return elem('mo', ['\u2016'], { stretchy: 'false' });
     if (name === '%') return elem('mo', ['%']);
     if (name === '#') return elem('mo', ['#']);
     if (name === '&') return elem('mo', ['&']);
@@ -1259,6 +1265,11 @@ class Parser {
       // Big operators (∑, ∏, ⋃, etc.) use under/over for limits
       if (bigOperators.has(name)) {
         return elem(sym.element, [sym.char], {}, { ':limits': true });
+      }
+      // Fence characters get stretchy="false" so they don't grow
+      // unexpectedly (only \left/\right should stretch)
+      if (sym.element === 'mo' && '()[]{}|\u2016'.includes(sym.char)) {
+        return elem(sym.element, [sym.char], { stretchy: 'false' });
       }
       return elem(sym.element, [sym.char]);
     }
