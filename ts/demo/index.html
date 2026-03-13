@@ -121,15 +121,15 @@
 <div class="status" id="status">Press <strong>Run benchmark</strong> to start. Make sure the page has fully loaded first.</div>
 
 <div class="summary" id="summary" hidden>
+  <div class="summary-card"><div class="lib" style="color:var(--bar-c)">MathJax</div><div class="time" id="sum-mathjax">—</div></div>
   <div class="summary-card"><div class="lib" style="color:var(--bar-a)">LuaMML</div><div class="time" id="sum-luamml">—</div></div>
   <div class="summary-card"><div class="lib" style="color:var(--bar-b)">KaTeX</div><div class="time" id="sum-katex">—</div></div>
-  <div class="summary-card"><div class="lib" style="color:var(--bar-c)">MathJax</div><div class="time" id="sum-mathjax">—</div></div>
 </div>
 
 <div class="legend" id="legend" hidden>
+  <span class="lc">MathJax</span>
   <span class="la">LuaMML</span>
   <span class="lb">KaTeX</span>
-  <span class="lc">MathJax</span>
 </div>
 
 <table>
@@ -138,13 +138,13 @@
       <th>Category</th>
       <th>LaTeX</th>
       <th>Reference (SVG)</th>
+      <th>MathJax</th>
       <th>LuaMML</th>
       <th>KaTeX</th>
-      <th>MathJax</th>
       <th>Timing (per iteration)</th>
+      <th class="num">MathJax</th>
       <th class="num">LuaMML</th>
       <th class="num">KaTeX</th>
-      <th class="num">MathJax</th>
     </tr>
   </thead>
   <tbody id="tbody"></tbody>
@@ -153,7 +153,7 @@
 <div id="visual-output" hidden>
   <h2>Rendered output comparison</h2>
   <table>
-    <thead><tr><th>LaTeX</th><th>Reference (SVG)</th><th>LuaMML (MathML)</th><th>KaTeX (MathML)</th><th>MathJax (MathML)</th></tr></thead>
+    <thead><tr><th>LaTeX</th><th>Reference (SVG)</th><th>MathJax (MathML)</th><th>LuaMML (MathML)</th><th>KaTeX (MathML)</th></tr></thead>
     <tbody id="vtbody"></tbody>
   </table>
 </div>
@@ -267,19 +267,19 @@ async function runBenchmark() {
       <td><span class="cat">${r.cat}</span></td>
       <td class="latex">${escHtml(r.tex)}</td>
       <td class="render-cell">${r.outSVG || '<em>err</em>'}</td>
+      <td class="render-cell">${r.errC ? '<em>err</em>' : r.outC}</td>
       <td class="render-cell">${r.errA ? '<em>err</em>' : r.outA}</td>
       <td class="render-cell">${r.errB ? '<em>err</em>' : r.outB}</td>
-      <td class="render-cell">${r.errC ? '<em>err</em>' : r.outC}</td>
       <td>
         <div class="bar-wrap">
+          <div class="bar c" style="width:${scale(r.tC || 0)}px" title="MathJax: ${fmtMs(r.tC)}"></div>
           <div class="bar a" style="width:${scale(r.tA || 0)}px" title="LuaMML: ${fmtMs(r.tA)}"></div>
           <div class="bar b" style="width:${scale(r.tB || 0)}px" title="KaTeX: ${fmtMs(r.tB)}"></div>
-          <div class="bar c" style="width:${scale(r.tC || 0)}px" title="MathJax: ${fmtMs(r.tC)}"></div>
         </div>
       </td>
+      <td class="num">${r.errC ? '<em>err</em>' : fmtMs(r.tC)}</td>
       <td class="num">${r.errA ? '<em>err</em>' : fmtMs(r.tA)}</td>
       <td class="num">${r.errB ? '<em>err</em>' : fmtMs(r.tB)}</td>
-      <td class="num">${r.errC ? '<em>err</em>' : fmtMs(r.tC)}</td>
     `;
     tbody.appendChild(tr);
   }
@@ -313,9 +313,9 @@ async function showVisual() {
     tr.innerHTML = `
       <td class="latex">${escHtml(t.tex)}</td>
       <td class="render-cell">${htmlSVG}</td>
+      <td class="render-cell">${htmlC}</td>
       <td class="render-cell">${htmlA}</td>
       <td class="render-cell">${htmlB}</td>
-      <td class="render-cell">${htmlC}</td>
     `;
     vtbody.appendChild(tr);
   }
