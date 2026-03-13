@@ -32,6 +32,7 @@ const stretchyChars = new Set([
   '\u2194', '\u21D4',                                 // ↔ ⇔
   '\u27F5', '\u27F6', '\u27F7', '\u27F8', '\u27F9', '\u27FA', // long arrows
   '\u21A6', '\u27FC',                                 // ↦ ⟼
+  '\u21A9', '\u21AA',                                 // ↩ ↪ (hook arrows)
   '\u221A',                                           // √ (surd)
 ]);
 
@@ -1537,6 +1538,8 @@ class Parser {
     if (t.type === 'command') {
       this.advance();
       const name = (t as { type: 'command'; name: string }).name;
+      // \| is a double vertical bar (U+2016)
+      if (name === '|') return '\u2016';
       // Check delimiter table
       const d = delimiters[name];
       if (d !== undefined) return d || null; // empty string = invisible
@@ -1597,14 +1600,7 @@ class Parser {
   private parseOverUnderSet(tag: 'mover' | 'munder'): MathMLElement {
     const annotation = this.parseArgSingle();
     const base = this.parseArgSingle();
-    // MathJax only adds accent when annotation is a single <mo> (operator symbol)
-    const attrs: Record<string, string> = {};
-    if (annotation.tag === 'mo') {
-      if (tag === 'mover') attrs.accent = 'true';
-      else attrs.accentunder = 'true';
-      annotation.attrs.stretchy = 'false';
-    }
-    return elem(tag, [base, annotation], attrs);
+    return elem(tag, [base, annotation]);
   }
 
   /** Parse \overunderset{over}{under}{base}. */
@@ -1733,7 +1729,9 @@ class Parser {
 
   private parseBoxed(): MathMLElement {
     const body = this.parseArgSingle();
-    return elem('menclose', [body], { notation: 'box' });
+    return elem('menclose', [
+      elem('mstyle', [body], { displaystyle: 'true', scriptlevel: '0' }),
+    ], { notation: 'box' });
   }
 
   private parseTextCommand(cmd: string): MathMLElement {
@@ -2039,7 +2037,11 @@ class Parser {
 
   private parseAligned(envName: string): MathMLElement {
     const rows = this.parseTableRows(envName);
-    return elem('mtable', rows, { columnalign: 'right left' });
+    return elem('mtable', rows, {
+      columnalign: 'right left',
+      columnspacing: '0em',
+      displaystyle: 'true',
+    });
   }
 
   private parseGathered(envName: string): MathMLElement {
@@ -2102,7 +2104,7 @@ class Parser {
       rows.push(elem('mtr', [elem('mtd', currentCells.length === 1 ? [currentCells[0]] : [elem('mrow', currentCells)])]));
     }
     this.expect('}');
-    return elem('mtable', rows);
+    return elem('mtable', rows, { columnspacing: '0em', rowspacing: '0.1em' });
   }
 
   /** Parse \array{...} command (MathJax-style, not \begin{array}). */
@@ -2420,7 +2422,7 @@ class Parser {
   private parseMod(): MathMLElement {
     const body = this.parseArgSingle();
     return elem('mrow', [
-      elem('mspace', [], { width: '1em' }),
+      elem('mspace', [], { width: '0.667em' }),
       elem('mi', ['mod']),
       elem('mspace', [], { width: '0.333em' }),
       body,
