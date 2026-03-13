@@ -44,13 +44,13 @@ const fenceChars = new Set([
 ]);
 
 // Symbols that are upright in TeX and need mathvariant="normal" as single-char <mi>.
-// Only needed for characters in the "default italic" range of MathML:
-// Latin (a-z, A-Z) and Greek (α-ω, Α-Ω). Other Unicode symbols (ℏ, ∂, ∞, etc.)
-// don't default to italic so they don't need mathvariant="normal".
+// Per MathML Core, any single-character <mi> defaults to italic unless mathvariant is set.
 const uprightSymbols = new Set([
   // Uppercase Greek letters
   'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon',
   'Phi', 'Psi', 'Omega',
+  // Symbols that should be upright, not italic
+  'infty', 'aleph', 'wp', 'emptyset', 'Re', 'Im',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -682,9 +682,11 @@ class MacroExpander {
 
 class Parser {
   private expander: MacroExpander;
+  private displayMode: boolean;
 
-  constructor(expander: MacroExpander) {
+  constructor(expander: MacroExpander, displayMode = false) {
     this.expander = expander;
+    this.displayMode = displayMode;
   }
 
   /**
@@ -1042,6 +1044,23 @@ class Parser {
       }
       return elem('mn', [digits]);
     }
+    // Leading decimal point: .34 → <mn>.34</mn>
+    if (ch === '.') {
+      const next = this.peek();
+      if (next?.type === 'char' && /[0-9]/.test((next as { type: 'char'; value: string }).value)) {
+        let digits = '.';
+        while (true) {
+          const p = this.peek();
+          if (p?.type === 'char' && /[0-9]/.test((p as { type: 'char'; value: string }).value)) {
+            digits += (p as { type: 'char'; value: string }).value;
+            this.advance();
+          } else {
+            break;
+          }
+        }
+        return elem('mn', [digits]);
+      }
+    }
     // Minus sign: use proper Unicode minus
     if (ch === '-') {
       return elem('mo', ['\u2212']);
@@ -1198,7 +1217,8 @@ class Parser {
       return this.parseVphantom();
     if (name === 'hphantom')
       return this.parseHphantom();
-    if (name === 'mathclap' || name === 'mathllap' || name === 'mathrlap')
+    if (name === 'mathclap' || name === 'mathllap' || name === 'mathrlap' ||
+        name === 'llap' || name === 'rlap')
       return this.parseMathLap(name);
     if (name === 'kern' || name === 'mkern')
       return this.parseKern(name);
@@ -1291,12 +1311,14 @@ class Parser {
     // --- Atom class commands ---
 
     if (name === 'mathopen' || name === 'mathclose' || name === 'mathpunct' ||
-        name === 'mathord' || name === 'mathbin' || name === 'mathrel')
+        name === 'mathord' || name === 'mathbin' || name === 'mathrel' ||
+        name === 'mathop')
       return this.parseAtomClass(name);
 
     // --- Line break hints ---
 
-    if (name === 'nobreak' || name === 'allowbreak')
+    if (name === 'nobreak' || name === 'allowbreak' || name === 'nonumber' ||
+        name === 'notag')
       return elem('mrow');  // no MathML equivalent, silently consume
 
     // --- \mathchoice ---
@@ -1329,6 +1351,12 @@ class Parser {
     if (name === 'quad') return elem('mspace', [], { width: '1em' });
     if (name === 'qquad') return elem('mspace', [], { width: '2em' });
     if (name === 'enspace') return elem('mspace', [], { width: '0.5em' });
+    if (name === 'thinspace') return elem('mspace', [], { width: '0.167em' });
+    if (name === 'medspace') return elem('mspace', [], { width: '0.222em' });
+    if (name === 'thickspace') return elem('mspace', [], { width: '0.278em' });
+    if (name === 'negthinspace') return elem('mspace', [], { width: '-0.167em' });
+    if (name === 'negmedspace') return elem('mspace', [], { width: '-0.222em' });
+    if (name === 'negthickspace') return elem('mspace', [], { width: '-0.278em' });
 
     // \iff: long double arrow with extra spacing
     if (name === 'iff')
@@ -1658,12 +1686,14 @@ class Parser {
       // Fallback: overlay with slash using mpadded
       return elem('mrow', [
         elem('mpadded', [elem('mtext', ['\u29F8'])], { width: '0' }),
+        next,
       ]);
     }
     // Fallback for non-mo next or empty
     if (next) {
       return elem('mrow', [
         elem('mpadded', [elem('mtext', ['\u29F8'])], { width: '0' }),
+        next,
       ]);
     }
     return elem('mo', ['\u00AC']);
@@ -1786,11 +1816,14 @@ class Parser {
 
   private parseAtomClass(name: string): MathMLElement {
     const body = this.parseArgSingle();
+    // \mathop: wrap in mo and allow limits placement
+    if (name === 'mathop') {
+      const text = this.extractText(body);
+      const el = text !== undefined ? elem('mo', [text]) : elem('mo', [body]);
+      el.meta[':limits'] = true;
+      return el;
+    }
     // Wrap content in appropriate MathML element to convey operator class
-    const classMap: Record<string, string> = {
-      mathopen: 'open', mathclose: 'close', mathpunct: 'separator',
-      mathord: 'normal', mathbin: 'infix', mathrel: 'infix',
-    };
     if (body.tag === 'mo') {
       if (name === 'mathopen') body.attrs.fence = 'true';
       else if (name === 'mathclose') body.attrs.fence = 'true';
@@ -1807,13 +1840,26 @@ class Parser {
     return body;
   }
 
+  /** Extract plain text from an element, or undefined if it contains nested elements. */
+  private extractText(el: MathMLElement): string | undefined {
+    if (el.children.length === 1 && typeof el.children[0] === 'string') {
+      return el.children[0];
+    }
+    if (el.tag === 'mrow' && el.children.every(c => typeof c === 'string')) {
+      return el.children.join('');
+    }
+    return undefined;
+  }
+
   private parseMathchoice(): MathMLElement {
-    // \mathchoice{D}{T}{S}{SS} — pick display (first) argument
-    const display = this.parseArgSingle();
-    this.parseArgSingle(); // text — discard
-    this.parseArgSingle(); // script — discard
-    this.parseArgSingle(); // scriptscript — discard
-    return display;
+    // \mathchoice{D}{T}{S}{SS} — pick based on current style context
+    const args = [
+      this.parseArgSingle(), // display
+      this.parseArgSingle(), // text
+      this.parseArgSingle(), // script
+      this.parseArgSingle(), // scriptscript
+    ];
+    return args[this.displayMode ? 0 : 1];
   }
 
   private parseMathFont(cmd: string): MathMLElement {
@@ -2473,10 +2519,10 @@ class Parser {
     if (name === 'mathclap') {
       return elem('mpadded', [body], { width: '0', lspace: '-0.5width' });
     }
-    if (name === 'mathllap') {
+    if (name === 'mathllap' || name === 'llap') {
       return elem('mpadded', [body], { width: '0', lspace: '-1width' });
     }
-    // mathrlap
+    // mathrlap / rlap
     return elem('mpadded', [body], { width: '0' });
   }
 
@@ -2484,18 +2530,31 @@ class Parser {
   private parseKern(name: string): MathMLElement {
     this.skipSpaces();
     let dim = '';
-    while (true) {
-      const t = this.peek();
-      if (!t) break;
-      if (t.type === 'char') {
-        const v = (t as { type: 'char'; value: string }).value;
-        if (/[0-9.\-]/.test(v) || /[a-z]/.test(v)) {
-          dim += v;
-          this.advance();
-          continue;
-        }
+    // Support braced dimension: \hskip{1cm}
+    if (this.peek()?.type === '{') {
+      this.advance(); // consume '{'
+      while (true) {
+        const t = this.peek();
+        if (!t || t.type === '}') break;
+        this.advance();
+        if (t.type === 'char') dim += (t as { type: 'char'; value: string }).value;
+        else if (t.type === 'command') dim += (t as { type: 'command'; name: string }).name;
       }
-      break;
+      this.expect('}');
+    } else {
+      while (true) {
+        const t = this.peek();
+        if (!t) break;
+        if (t.type === 'char') {
+          const v = (t as { type: 'char'; value: string }).value;
+          if (/[0-9.\-]/.test(v) || /[a-z]/.test(v)) {
+            dim += v;
+            this.advance();
+            continue;
+          }
+        }
+        break;
+      }
     }
     // Strip glue (plus/minus components) for hskip/mskip
     if (name === 'hskip' || name === 'mskip') {
@@ -3111,9 +3170,9 @@ function getStyleAttrs(name: string): Record<string, string | number | boolean |
   }
   switch (name) {
     case 'displaystyle':
-      return { displaystyle: 'true' };
+      return { displaystyle: 'true', scriptlevel: '0' };
     case 'textstyle':
-      return { displaystyle: 'false' };
+      return { displaystyle: 'false', scriptlevel: '0' };
     case 'scriptstyle':
       return { displaystyle: 'false', scriptlevel: '1' };
     case 'scriptscriptstyle':
@@ -3146,16 +3205,25 @@ export class ParseError extends Error {
  * @returns MathMLElement tree rooted at `<math>`.
  */
 export function render(input: string, options: RenderOptions = {}): MathMLElement {
-  const macros = options.macros ? normalizeMacros(options.macros) : new Map();
-  const tokens = tokenize(input);
-  const expander = new MacroExpander(tokens, macros);
-  const parser = new Parser(expander);
-  const body = parser.parseExpression();
+  let children: (MathMLElement | string)[];
+  try {
+    const macros = options.macros ? normalizeMacros(options.macros) : new Map();
+    const tokens = tokenize(input);
+    const expander = new MacroExpander(tokens, macros);
+    const parser = new Parser(expander, !!options.displayMode);
+    const body = parser.parseExpression();
 
-  // Unwrap the top-level mrow only if it's the implicit one from parseExpression
-  // (multiple children, not from \left/\right or other semantic constructs).
-  const children = (body.tag === 'mrow' && body.children.length > 1 && !body.meta[':fenced'])
-    ? body.children : [body];
+    // Unwrap the top-level mrow only if it's the implicit one from parseExpression
+    // (multiple children, not from \left/\right or other semantic constructs).
+    children = (body.tag === 'mrow' && body.children.length > 1 && !body.meta[':fenced'])
+      ? body.children : [body];
+  } catch (e) {
+    if (e instanceof ParseError) {
+      children = [elem('merror', [elem('mtext', [e.message])])];
+    } else {
+      throw e;
+    }
+  }
   const math = elem('math', children, {
     xmlns: 'http://www.w3.org/1998/Math/MathML',
   });

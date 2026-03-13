@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { render, renderToString, ParseError } from '../latex.js';
+import { render, renderToString } from '../latex.js';
 import type { MathMLElement } from '../types.js';
 
 /** Helper: render and return the inner content (children of <math>). */
@@ -498,12 +498,16 @@ describe('LaTeX parser', () => {
       assert.equal(el.tag, 'merror');
     });
 
-    it('throws on missing closing brace', () => {
-      assert.throws(() => render('{x'), ParseError);
+    it('returns merror on missing closing brace', () => {
+      const math = render('{x');
+      const merror = math.children.find((c): c is MathMLElement => typeof c !== 'string' && c.tag === 'merror');
+      assert.ok(merror, 'should contain <merror>');
     });
 
-    it('throws on missing \\right', () => {
-      assert.throws(() => render('\\left( x'), ParseError);
+    it('returns merror on missing \\right', () => {
+      const math = render('\\left( x');
+      const merror = math.children.find((c): c is MathMLElement => typeof c !== 'string' && c.tag === 'merror');
+      assert.ok(merror, 'should contain <merror>');
     });
   });
 
