@@ -907,8 +907,14 @@ describe('LaTeX parser', () => {
     });
 
     it('parses \\idotsint', () => {
-      const el = renderSingle('\\idotsint');
-      assert.equal(el.tag, 'mo');
+      const children = renderInner('\\idotsint');
+      assert.equal(children.length, 3);
+      assert.equal(children[0].tag, 'mo');
+      assert.deepEqual(children[0].children, ['\u222B']);
+      assert.equal(children[1].tag, 'mo');
+      assert.deepEqual(children[1].children, ['\u22EF']);
+      assert.equal(children[2].tag, 'mo');
+      assert.deepEqual(children[2].children, ['\u222B']);
     });
   });
 

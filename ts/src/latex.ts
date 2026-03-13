@@ -197,6 +197,11 @@ class MacroExpander {
     this.macros = macros;
     this.stack = [];
     this.expansionCount = 0;
+
+    // Built-in macros (can be overridden by user macros)
+    if (!this.macros.has('idotsint')) {
+      this.macros.set('idotsint', { args: 0, expansion: '\\int\\cdots\\int' });
+    }
   }
 
   // ---- Low-level token access ----

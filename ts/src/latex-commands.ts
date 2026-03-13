@@ -388,7 +388,6 @@ export const symbols: Record<string, SymbolDef> = {
   oiiint:             { char: '\u2230', element: 'mo' },
   smallint:           { char: '\u222B', element: 'mo' },
   iiiint:             { char: '\u2A0C', element: 'mo' },
-  idotsint:           { char: '\u222B\u22EF\u222B', element: 'mo' },
 
   // Logo-like
   KaTeX:              { char: 'KaTeX', element: 'mi' },
@@ -514,7 +513,6 @@ export const operatorNamesWithLimits = new Set([
 export const bigOperators = new Set([
   'sum', 'prod', 'coprod', 'bigcup', 'bigcap', 'bigvee', 'bigwedge',
   'bigoplus', 'bigotimes', 'bigsqcup', 'biguplus', 'bigodot',
-  'iiiint', 'idotsint',
 ]);
 
 /** Delimiter command → Unicode mapping (for \left/\right). */
