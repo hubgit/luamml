@@ -384,6 +384,7 @@ export const symbols: Record<string, SymbolDef> = {
   rbrace:   { char: '}', element: 'mo' },
   lvert:    { char: '|', element: 'mo' },
   rvert:    { char: '|', element: 'mo' },
+  vert:     { char: '|', element: 'mo' },
   lVert:    { char: '\u2016', element: 'mo' },
   rVert:    { char: '\u2016', element: 'mo' },
 };
@@ -503,6 +504,7 @@ export const delimiters: Record<string, string> = {
   rbrace: '}',
   lvert: '|',
   rvert: '|',
+  vert: '|',
   lVert: '\u2016',
   rVert: '\u2016',
   uparrow: '\u2191',
