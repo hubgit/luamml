@@ -259,7 +259,10 @@ describe('LaTeX parser', () => {
     it('parses \\hat', () => {
       const el = renderSingle('\\hat{x}');
       assert.equal(el.tag, 'mover');
-      assert.equal(el.attrs.accent, 'true');
+      // accent="true" goes on the <mo>, not the <mover> (matching MathJax)
+      const mo = el.children[1] as MathMLElement;
+      assert.equal(mo.tag, 'mo');
+      assert.equal(mo.attrs.accent, 'true');
     });
 
     it('parses \\overline (wide)', () => {

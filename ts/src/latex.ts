@@ -1604,18 +1604,18 @@ class Parser {
     const def = accents[name];
     const body = this.parseArgSingle();
     const stretchy = wideAccents.has(name);
-    const accentMo = elem('mo', [def.char], { stretchy: stretchy ? 'true' : 'false' });
-    const tag = def.over ? 'mover' : 'munder';
     const isDecoration = nonAccentDecorations.has(name);
-    const attrs: Record<string, string> = {};
-    if (!isDecoration) {
-      attrs[def.over ? 'accent' : 'accentunder'] = 'true';
-    }
+    const moAttrs: Record<string, string> = {};
+    if (stretchy) moAttrs.stretchy = 'true';
+    if (!stretchy) moAttrs.stretchy = 'false';
+    if (!isDecoration) moAttrs.accent = 'true';
+    const accentMo = elem('mo', [def.char], moAttrs);
+    const tag = def.over ? 'mover' : 'munder';
     const meta: Record<string, unknown> = {};
     if (isDecoration) {
       meta[':limits'] = true;
     }
-    return elem(tag, [body, accentMo], attrs, meta);
+    return elem(tag, [body, accentMo], {}, meta);
   }
 
   private parseEnvironment(): MathMLElement {
